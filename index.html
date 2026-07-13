@@ -3,14 +3,14 @@
 {
   "name": "Honeymoon Plan",
   "schemaVersion": 1,
-  "description": "Interactive honeymoon itinerary editor."
+  "description": "Interactive honeymoon itinerary viewer for Jackson Hole, Aug 26–Sep 2. Tabs for overview timeline, day-by-day itinerary, activities explorer, cost breakdown, interactive bucket list, and open items."
 }
 </script>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Honeymoon</title>
+<title>Jackson Hole Honeymoon — Aug 26 – Sep 2</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -968,6 +968,38 @@
   .item-drag-handle { align-self: center; flex-shrink: 0; color: var(--beige); font-size: 14px; cursor: grab; }
   .activity-item[draggable="true"] { cursor: grab; }
   .activity-item[draggable="true"]:active { cursor: grabbing; }
+  /* ── Custom-option editor (edit mode only) ── */
+  .add-custom-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin: 12px 0 2px; padding: 7px 14px;
+    font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    color: var(--sage-dark); background: #EAF3E8;
+    border: 1px dashed var(--sage); border-radius: 18px; cursor: pointer; transition: all 0.15s;
+  }
+  .add-custom-btn:hover { background: var(--sage); color: #fff; }
+  .activity-item.custom-edit { flex-direction: column; align-items: stretch; gap: 8px; background: var(--cream); border: 1px solid var(--ivory); border-radius: 10px; padding: 12px; }
+  .custom-edit-top { display: flex; align-items: center; gap: 8px; }
+  .custom-edit-current-icon { font-size: 20px; }
+  .custom-edit-label { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--beige); }
+  .icon-select-btn { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; color: var(--sage-dark); background: var(--warm-white); border: 1px solid var(--sage-light); border-radius: 14px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
+  .icon-select-btn:hover { background: #EAF3E8; border-color: var(--sage); }
+  .custom-icon-picker { display: none; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .custom-icon-picker.open { display: flex; }
+  .icon-choice { width: 30px; height: 30px; font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; background: var(--warm-white); border: 1px solid var(--ivory); border-radius: 8px; cursor: pointer; transition: all 0.12s; padding: 0; }
+  .icon-choice:hover { border-color: var(--sage-light); }
+  .icon-choice.sel { background: #EAF3E8; border-color: var(--sage); box-shadow: 0 0 0 1px var(--sage); }
+  .custom-name-input { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 600; color: var(--charcoal); background: var(--warm-white); border: 1px solid var(--ivory); border-radius: 6px; padding: 6px 10px; width: 100%; }
+  .custom-name-input:focus, .custom-detail-input:focus { outline: none; border-color: var(--sage); }
+  .custom-detail-input { font-family: 'Montserrat', sans-serif; font-size: 13px; line-height: 1.5; color: var(--warm-gray); background: var(--warm-white); border: 1px solid var(--ivory); border-radius: 6px; padding: 6px 10px; width: 100%; resize: vertical; min-height: 42px; }
+  /* ── Item time (view pill + edit picker) ── */
+  .activity-time { display: inline-block; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; color: var(--sage-dark); background: #EAF3E8; border-radius: 10px; padding: 1px 8px; margin-bottom: 3px; }
+  .activity-time-input { font-family: 'Montserrat', sans-serif; font-size: 12px; color: var(--charcoal); background: var(--warm-white); border: 1px solid var(--ivory); border-radius: 6px; padding: 2px 6px; margin-bottom: 4px; }
+  .activity-time-input:focus { outline: none; border-color: var(--sage); }
+  .custom-time-row { display: flex; align-items: center; gap: 8px; }
+  /* ── "Save changes" flush button in the edit drawer ── */
+  .btn-save-all { display: block; width: 100%; margin-bottom: 10px; font-size: 12px; padding: 9px 16px; }
+  .btn-save-all:disabled { opacity: 0.75; cursor: default; }
+  .btn-save-all.save-failed { background: #B05A5A; }
   .activity-empty {
     list-style: none; text-align: center;
     font-size: 12px; font-style: italic; color: var(--beige);
@@ -1193,6 +1225,7 @@
   <div class="staging-sub">Tap to select an item — selected items can be dragged into a day. Anything not yet placed appears here.</div>
   <div id="staging-list"></div>
   <div class="staging-footer">
+    <button class="btn-save btn-save-all" id="save-all-btn" onclick="saveAllEdits()">✓ Save changes</button>
     <button class="export-btn" onclick="openExport()">⬇ Download Updated Files</button>
     <button class="export-btn" id="seed-btn" onclick="seedContentToCloud()">⬆ Seed content to Supabase</button>
     <button class="export-btn" id="migrate-img-btn" onclick="migrateImagesToCloud()">🖼 Migrate images to Supabase</button>
@@ -1531,13 +1564,15 @@
     return { days: itineraryDraft, unassignedItems: unassignedItems };
   }
   async function saveItineraryToCloud() {
-    if (!document.body.classList.contains('role-editor')) return;  // editor only (RLS also enforces server-side)
+    if (!document.body.classList.contains('role-editor')) return false;  // editor only (RLS also enforces server-side)
     try {
-      await sb.from('content').upsert(
+      const { error } = await sb.from('content').upsert(
         { key: 'itinerary', value: currentItineraryValue(), updated_at: new Date().toISOString() },
         { onConflict: 'key' }
       );
-    } catch (e) {}
+      if (error) throw error;
+      return true;
+    } catch (e) { return false; }
   }
 
   // ===== STAGE 5: gallery photo uploads (private bucket → signed URLs) =====
@@ -1909,11 +1944,12 @@
         </div>
         <div class="day-body" ${edit ? `ondragover="allowDrop(event)" ondrop="dropOnDay(event, ${day.dayNumber})"` : ''}>
           <ul class="activity-list">
-            ${day.activities.map(a => `
+            ${day.activities.map(a => (edit && a.type === 'custom') ? customEditItemHtml(a, day.dayNumber) : `
               <li class="activity-item" data-uid="${a.uid}" ${edit ? `draggable="true" ondragstart="dragStartItem(event, '${a.uid}')" ondragover="allowDrop(event)" ondrop="dropOnItem(event, ${day.dayNumber}, '${a.uid}')"` : ''}>
                 ${edit ? '<span class="item-drag-handle" title="Drag to reorder">⠿</span>' : ''}
                 <div class="activity-icon">${a.icon}</div>
                 <div class="activity-content">
+                  ${edit ? `<input type="time" class="activity-time-input" value="${a.time || ''}" onclick="event.stopPropagation()" onchange="setItemTime('${a.uid}', this.value)">` : (a.time ? `<div class="activity-time">${formatTime(a.time)}</div>` : '')}
                   <div class="activity-name">${a.name}</div>
                   ${a.detail ? `<div class="activity-detail">${a.detail}</div>` : ''}
                 </div>
@@ -1923,6 +1959,7 @@
             `).join('')}
             ${edit && day.activities.length === 0 ? '<li class="activity-empty">Drop items here</li>' : ''}
           </ul>
+          ${edit ? `<button class="add-custom-btn" onclick="addCustomItem(${day.dayNumber})" title="Add a custom option to this day">＋ Add custom</button>` : ''}
         </div>
       </div>
     `).join('');
@@ -2152,6 +2189,132 @@
     day.title = value;
     commitDraftChange();
   }
+
+  // ── CUSTOM OPTIONS (user-authored day items, edit mode) ──
+  // Custom items are plain { type:'custom', uid, icon, name, detail } — they already save with the
+  // itinerary (currentItineraryValue → Supabase) and reload via expandItem, so this is UI-only.
+  // Curated emoji set for the picker; add/remove freely.
+  const CUSTOM_ICONS = ['⭐','🥾','🏔️','🌄','🌅','📸','🚗','✈️','🏨','🍽️','☕','🥞','🍔','🧇','🍷','🧺','🚣','🐎','🚲','🛍️','🎡','💆','⛪','🙏','🦌','🐻','❤️','🎁','🎶','📖','🛁','🗺️'];
+  function findDraftItem(uid) {
+    for (const d of itineraryDraft) { const a = d.activities.find(x => x.uid === uid); if (a) return a; }
+    return null;
+  }
+  // Native <input type="time"> stores 24h "HH:MM"; show a friendly 12h label. Other formats pass through.
+  function formatTime(t) {
+    if (!t) return '';
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+    if (!m) return t;
+    let h = parseInt(m[1], 10); const min = m[2];
+    const ap = h < 12 ? 'AM' : 'PM';
+    h = h % 12; if (h === 0) h = 12;
+    return h + ':' + min + ' ' + ap;
+  }
+  // Set/clear the time on any placed item (activity, food, or custom). Autosaves; no itinerary
+  // re-render so the time picker keeps focus (same approach as the custom-field editor).
+  function setItemTime(uid, value) {
+    const it = findDraftItem(uid);
+    if (!it) return;
+    const v = value || null;
+    if (it.time === v) return;
+    it.time = v;
+    renderOverview();
+    saveItineraryToCloud();
+  }
+  // Editable custom row (edit mode). Name/description autosave on blur (onchange) via setCustomField;
+  // the icon picker updates in place so a half-typed field keeps focus.
+  function customEditItemHtml(a, dayNumber) {
+    const icons = CUSTOM_ICONS.map(ic =>
+      `<button type="button" class="icon-choice ${a.icon === ic ? 'sel' : ''}" data-icon="${ic}" onclick="setCustomIcon('${a.uid}', this.dataset.icon)">${ic}</button>`
+    ).join('');
+    return `
+              <li class="activity-item custom-edit" data-uid="${a.uid}" ondragover="allowDrop(event)" ondrop="dropOnItem(event, ${dayNumber}, '${a.uid}')">
+                <div class="custom-edit-top">
+                  <span class="item-drag-handle" title="Drag to reorder" draggable="true" ondragstart="dragStartItem(event, '${a.uid}')">⠿</span>
+                  <span class="custom-edit-current-icon">${a.icon || '⭐'}</span>
+                  <button type="button" class="icon-select-btn" onclick="toggleIconPicker('${a.uid}')">Select icon</button>
+                  <span class="custom-edit-label">Custom option</span>
+                  <button class="item-remove" title="Remove from day" onclick="removeItem(event, ${dayNumber}, '${a.uid}')" style="margin-left:auto">✕</button>
+                </div>
+                <div class="custom-icon-picker">${icons}</div>
+                <input class="custom-name-input" id="custom-name-${a.uid}" placeholder="Name (e.g. Sunset walk by the river)" value="${escAttr(a.name)}" onchange="setCustomField('${a.uid}', 'name', this.value)">
+                <div class="custom-time-row"><span class="custom-edit-label">Time</span><input type="time" class="activity-time-input" value="${a.time || ''}" onchange="setItemTime('${a.uid}', this.value)"></div>
+                <textarea class="custom-detail-input" placeholder="Description (optional)" onchange="setCustomField('${a.uid}', 'detail', this.value)">${escHtml(a.detail)}</textarea>
+              </li>`;
+  }
+  function addCustomItem(dayNumber) {
+    if (!isDesktopEdit()) return;
+    const day = itineraryDraft.find(d => d.dayNumber === dayNumber);
+    if (!day) return;
+    const uid = newUid();
+    day.activities.push({ type: 'custom', uid, icon: '⭐', name: '', detail: '', time: null });
+    renderItinerary();  // show the new editable row; don't persist an empty scaffold yet
+    setTimeout(() => { const el = document.getElementById('custom-name-' + uid); if (el) el.focus(); }, 0);
+  }
+  // Show/hide the icon grid for a custom row (grid is collapsed until "Select icon" is pressed).
+  function toggleIconPicker(uid) {
+    const li = document.querySelector('.custom-edit[data-uid="' + uid + '"]');
+    if (!li) return;
+    const picker = li.querySelector('.custom-icon-picker');
+    const btn = li.querySelector('.icon-select-btn');
+    if (!picker) return;
+    const open = picker.classList.toggle('open');
+    if (btn) btn.textContent = open ? 'Close icons' : 'Select icon';
+  }
+  function setCustomIcon(uid, icon) {
+    const it = findDraftItem(uid);
+    if (!it) return;
+    const li = document.querySelector('.custom-edit[data-uid="' + uid + '"]');
+    // Collapse the grid again once a choice is made (or the same icon is re-picked).
+    if (li) {
+      const picker = li.querySelector('.custom-icon-picker'); if (picker) picker.classList.remove('open');
+      const btn = li.querySelector('.icon-select-btn'); if (btn) btn.textContent = 'Select icon';
+    }
+    if (it.icon === icon) return;  // unchanged → just collapse
+    it.icon = icon;
+    // Update highlight + preview in place so a focused name/description input isn't disturbed.
+    if (li) {
+      li.querySelectorAll('.icon-choice').forEach(b => b.classList.toggle('sel', b.dataset.icon === icon));
+      const cur = li.querySelector('.custom-edit-current-icon'); if (cur) cur.textContent = icon;
+    }
+    saveCustomEdit();
+  }
+  function setCustomField(uid, field, value) {
+    const it = findDraftItem(uid);
+    if (!it || it[field] === value) return;
+    it[field] = value;
+    saveCustomEdit();  // no itinerary re-render → keeps focus when tabbing between fields
+  }
+  // Persist a custom edit to Supabase + refresh the derived Overview, without rebuilding the
+  // itinerary list (which would drop input focus mid-edit).
+  function saveCustomEdit() {
+    renderOverview();
+    saveItineraryToCloud();
+  }
+  // Drop half-added custom options that were never given a name or description.
+  function pruneEmptyCustomItems() {
+    let changed = false;
+    itineraryDraft.forEach(day => {
+      const before = day.activities.length;
+      day.activities = day.activities.filter(a => !(a.type === 'custom' && !(a.name && a.name.trim()) && !(a.detail && a.detail.trim())));
+      if (day.activities.length !== before) changed = true;
+    });
+    if (changed) { renderOverview(); saveItineraryToCloud(); }
+  }
+  // Explicit "finish my edits" flush: tidy blank customs, then push the whole itinerary + checklist
+  // to Supabase with a visible result. Autosave still runs on every change; this is the confirm action.
+  async function saveAllEdits() {
+    const btn = document.getElementById('save-all-btn');
+    pruneEmptyCustomItems();
+    renderItinerary();
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    const ok = await saveItineraryToCloud();
+    await saveChecklistState();
+    if (btn) {
+      btn.textContent = ok ? '✓ Saved' : '⚠ Not saved — retry';
+      btn.classList.toggle('save-failed', !ok);
+      setTimeout(() => { btn.disabled = false; btn.textContent = '✓ Save changes'; btn.classList.remove('save-failed'); }, 2200);
+    }
+  }
   // Single re-render entry point for every in-session mutation.
   function commitDraftChange() {
     renderItinerary();
@@ -2352,11 +2515,13 @@
     if (!isDesktopEdit()) return;
     const open = document.getElementById('staging-drawer').classList.toggle('open');
     document.body.classList.toggle('editing', open);
+    if (!open) pruneEmptyCustomItems();  // leaving edit mode → clean up untouched custom rows
     renderItinerary();
   }
   function closeStagingDrawer() {
     const d = document.getElementById('staging-drawer'); if (d) d.classList.remove('open');
     document.body.classList.remove('editing');
+    pruneEmptyCustomItems();
     renderItinerary();
   }
   let lastDesktopEdit = isDesktopEdit();
