@@ -1,0 +1,2496 @@
+<!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Honeymoon Plan",
+  "schemaVersion": 1,
+  "description": "Interactive honeymoon itinerary viewer for Jackson Hole, Aug 26–Sep 2. Tabs for overview timeline, day-by-day itinerary, activities explorer, cost breakdown, interactive bucket list, and open items."
+}
+</script>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jackson Hole Honeymoon — Aug 26 – Sep 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --cream: #FAF7F2;
+    --ivory: #F5F0E8;
+    --sage: #7D9B76;
+    --sage-light: #A8C4A2;
+    --sage-dark: #5A7554;
+    --beige: #C9B99A;
+    --charcoal: #3A3530;
+    --warm-gray: #7A7068;
+    --warm-white: #FEFCF8;
+    --gold: #C4A96B;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .hero {
+    background: linear-gradient(160deg, #2C3E2D 0%, #3D5C3A 40%, #5A7554 100%);
+    padding: 52px 40px 44px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 300'%3E%3Cpolygon points='0,300 120,140 220,200 340,80 460,160 580,60 680,130 800,40 800,300' fill='rgba(255,255,255,0.03)'/%3E%3Cpolygon points='0,300 80,180 180,240 300,110 420,190 540,90 640,160 760,70 800,100 800,300' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E") center/cover no-repeat;
+    opacity: 0.6;
+  }
+  .hero-content { position: relative; z-index: 1; }
+  .hero-eyebrow {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--sage-light);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px;
+    font-weight: 600;
+    color: #FAF7F2;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .hero h1 em { font-style: italic; color: var(--sage-light); }
+  .hero-dates {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: var(--beige);
+    margin-bottom: 18px;
+  }
+  .hero-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-style: italic;
+    color: rgba(250,247,242,0.75);
+  }
+
+  /* TABS */
+  .tabs-bar {
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--ivory);
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .tabs-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 14px 18px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--warm-gray);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--sage-dark); }
+  .tab-btn.active {
+    color: var(--sage-dark);
+    border-bottom-color: var(--sage);
+  }
+
+  /* MAIN CONTENT */
+  .main { max-width: 780px; margin: 0 auto; padding: 32px 0 60px; }
+  .tab-panel { display: none; padding: 0 20px; }
+  .tab-panel.active { display: block; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--charcoal);
+    margin-bottom: 6px;
+  }
+  .section-sub {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 28px;
+  }
+
+  /* TIMELINE (Overview tab) */
+  .timeline { position: relative; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: -12px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--sage-light), var(--beige));
+    border-radius: 2px;
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 10px;
+    padding: 14px 16px 14px 16px;
+    background: var(--warm-white);
+    border: 1px solid var(--ivory);
+    border-radius: 10px;
+    transition: box-shadow 0.2s;
+  }
+  .tl-item:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -16px; top: 18px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--sage);
+    border: 2px solid var(--cream);
+    box-shadow: 0 0 0 2px var(--sage-light);
+  }
+  .tl-item.wedding::before { background: var(--gold); box-shadow: 0 0 0 2px #E8D5A0; }
+  .tl-item.travel::before { background: var(--beige); box-shadow: 0 0 0 2px #DDD0BB; }
+  .tl-date {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--sage-dark);
+    margin-bottom: 3px;
+  }
+  .tl-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--charcoal);
+    margin-bottom: 4px;
+  }
+  .tl-desc {
+    font-size: 12px;
+    color: var(--warm-gray);
+    line-height: 1.6;
+  }
+  .tl-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 6px;
+  }
+  .tag-confirmed { background: #EAF3E8; color: var(--sage-dark); }
+  .tag-open { background: #FDF3E3; color: #B5893A; }
+  .tag-surprise { background: #F5EEF8; color: #7D5A8A; }
+
+  /* DAY CARDS */
+  .day-card {
+    background: var(--warm-white);
+    border: 1px solid var(--ivory);
+    border-radius: 14px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .day-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, var(--sage-dark) 0%, var(--sage) 100%);
+    cursor: pointer;
+    user-select: none;
+  }
+  .day-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    line-height: 1;
+    min-width: 36px;
+  }
+  .day-title-wrap { flex: 1; }
+  .day-date-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--sage-light);
+    margin-bottom: 2px;
+  }
+  .day-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #FAF7F2;
+  }
+  .day-chevron {
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+    transition: transform 0.3s;
+  }
+  .day-card.open .day-chevron { transform: rotate(180deg); }
+  .day-body {
+    padding: 20px 22px;
+    display: none;
+    border-top: 1px solid var(--ivory);
+  }
+  .day-card.open .day-body { display: block; }
+
+  /* Activity rows */
+  .activity-list { list-style: none; }
+  .activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ivory);
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-icon {
+    font-size: 18px;
+    min-width: 26px;
+    text-align: center;
+    margin-top: 1px;
+  }
+  .activity-content { flex: 1; }
+  .activity-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--charcoal);
+    margin-bottom: 2px;
+  }
+  .activity-detail {
+    font-size: 12px;
+    color: var(--warm-gray);
+    line-height: 1.5;
+  }
+  .activity-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    align-self: center;
+  }
+  .badge-res { background: #E8F3EA; color: #4A7A52; }
+  .badge-cost { background: #FEF3E2; color: #B5893A; }
+  .badge-open { background: #F3F0FF; color: #6B5FA6; }
+
+  /* COSTS TABLE */
+  .costs-section { margin-top: 28px; }
+  .cost-card {
+    background: var(--warm-white);
+    border: 1px solid var(--ivory);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .cost-header {
+    padding: 14px 18px;
+    background: var(--ivory);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--warm-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--ivory);
+    font-size: 13px;
+    gap: 10px;
+  }
+  .cost-row:last-child { border-bottom: none; }
+  .cost-name { color: var(--charcoal); font-weight: 500; flex: 1; }
+  .cost-amount { font-weight: 600; color: var(--sage-dark); font-family: 'Cormorant Garamond', serif; font-size: 16px; white-space: nowrap; }
+  .cost-amount.tbd { color: var(--beige); font-size: 13px; font-family: 'Montserrat', sans-serif; font-style: italic; }
+  .cost-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, var(--sage-dark), var(--sage));
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    border-radius: 0 0 12px 12px;
+  }
+  .cost-total-row .cost-amount { color: white; font-size: 20px; font-family: 'Cormorant Garamond', serif; }
+  .cost-total-sub { font-size: 10px; font-weight: 400; opacity: 0.7; margin-top: 2px; }
+
+  /* ACTIVITIES EXPLORER */
+  .activities-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 4px;
+  }
+  @media (max-width: 560px) { .activities-grid { grid-template-columns: 1fr; } }
+
+  @media (max-width: 480px) {
+    /* Hero */
+    .hero { padding: 36px 26px 28px; }
+    .hero h1 { font-size: 34px; }
+    .hero-tagline { font-size: 15px; }
+
+    /* Tabs — switch to left-align so overflow scroll starts at the first tab */
+    .tabs-bar { justify-content: flex-start; }
+    .tab-btn { padding: 12px 11px; font-size: 10px; letter-spacing: 0.5px; }
+
+    /* Main container */
+    .main { padding: 22px 0 48px; }
+    .section-title { font-size: 24px; }
+
+    /* Hotel card */
+    .hotel-name { font-size: 22px; }
+    .hotel-card { padding: 18px; }
+
+    /* Day cards */
+    .day-header { padding: 13px 14px; gap: 10px; }
+    .day-number { font-size: 28px; min-width: 28px; }
+    .day-title { font-size: 18px; }
+    .day-body { padding: 14px 16px; }
+
+    /* Cost rows — tighter padding, smaller font to prevent compression */
+    .cost-row { padding: 10px 12px; font-size: 12px; gap: 8px; }
+    .cost-header { padding: 12px; }
+    .cost-total-row { padding: 12px; }
+
+    /* Gallery grid — single column on phones */
+    .gallery-grid { grid-template-columns: 1fr; gap: 12px; }
+
+    /* Lightbox — use more screen width on small devices */
+    .lightbox-box { max-width: 94vw; max-height: 72vh; }
+    .lightbox-box img { max-width: 94vw; max-height: 72vh; }
+
+    /* Editor UI is desktop-only — hidden entirely on phones */
+    .edit-only { display: none !important; }
+  }
+  .act-card {
+    position: relative;
+    background: var(--warm-white);
+    border: 1px solid var(--ivory);
+    border-radius: 12px;
+    padding: 16px;
+    transition: box-shadow 0.2s;
+  }
+  .act-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+  .act-card-icon { font-size: 24px; margin-bottom: 8px; }
+  .act-card-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--charcoal);
+    margin-bottom: 4px;
+  }
+  .act-card-detail {
+    font-size: 11px;
+    color: var(--warm-gray);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .act-card-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sage-dark);
+  }
+  .act-status {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .status-scheduled { background: #E8F3EA; color: #4A7A52; }
+  .status-option { background: #FEF3E2; color: #B5893A; }
+
+  /* CART TOGGLE (add-to-cart affordance, distinct from Bucket List check) */
+  .cart-check {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--sage);
+    background: transparent;
+    color: var(--sage);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s;
+  }
+  .cart-check:hover { background: var(--sage-light); border-color: var(--sage-light); color: white; }
+  .cart-check.in-cart { background: var(--sage); border-color: var(--sage); color: white; }
+  .cart-check.locked { cursor: not-allowed; opacity: 0.7; }
+  .cart-check.locked:hover { background: var(--sage); border-color: var(--sage); color: white; }
+  .act-cart { position: absolute; top: 14px; right: 14px; }
+  .tier-select { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tier-chip {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--sage-light);
+    background: transparent;
+    color: var(--sage-dark);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tier-chip:hover { border-color: var(--sage); }
+  .tier-chip.sel { background: var(--sage); border-color: var(--sage); color: white; }
+  .food-text { flex: 1; }
+
+  /* BUCKET LIST */
+  .bucket-list { list-style: none; }
+  .bucket-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 16px;
+    margin-bottom: 8px;
+    background: var(--warm-white);
+    border: 1px solid var(--ivory);
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--charcoal);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .bucket-item:hover { border-color: var(--sage-light); }
+  .bucket-item.checked {
+    background: #EAF3E8;
+    border-color: var(--sage-light);
+    color: var(--warm-gray);
+    text-decoration: line-through;
+    text-decoration-color: var(--sage);
+  }
+  .bucket-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--beige);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.2s;
+  }
+  .bucket-item.checked .bucket-check {
+    background: var(--sage);
+    border-color: var(--sage);
+    color: white;
+  }
+
+  /* ANIMAL SCRAPBOOK */
+  .animal-group { margin-bottom: 24px; }
+  .animal-group:last-child { margin-bottom: 0; }
+  .animal-group-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--sage-dark);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--ivory);
+  }
+  .animal-text { flex: 1; }
+  .animal-name { font-weight: 500; }
+  .animal-note {
+    font-size: 11px;
+    color: var(--warm-gray);
+    line-height: 1.45;
+    margin-top: 2px;
+    font-weight: 400;
+  }
+  .animal-thumbs { display: flex; gap: 6px; flex-shrink: 0; }
+  .animal-thumbs img {
+    width: 46px; height: 46px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--ivory);
+    display: block;
+  }
+
+  /* FOOD OPTIONS */
+  .food-group { margin-bottom: 24px; }
+  .food-group:last-child { margin-bottom: 0; }
+  .food-group-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--sage-dark);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--ivory);
+  }
+  .food-item {
+    padding: 11px 16px;
+    margin-bottom: 8px;
+    background: var(--warm-white);
+    border: 1px solid var(--ivory);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--charcoal);
+  }
+  .food-item-row { display: flex; align-items: center; gap: 12px; }
+  .food-item:last-child { margin-bottom: 0; }
+  .food-name { font-weight: 500; }
+  .food-cost { font-size: 12px; color: var(--warm-gray); font-weight: 400; margin-top: 3px; }
+  .food-summary-panel {
+    display: none;
+    border-top: 1px dashed var(--ivory);
+    margin-top: 8px;
+    padding-top: 8px;
+    font-size: 12px;
+    color: var(--warm-gray);
+    line-height: 1.4;
+    font-weight: 400;
+  }
+  .food-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .food-menu-btn {
+    border: 1px solid var(--sage-light);
+    background: transparent;
+    color: var(--sage-dark);
+    text-transform: uppercase;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border-radius: 20px;
+    padding: 5px 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .food-menu-btn:hover { background: var(--sage); border-color: var(--sage); color: white; }
+
+  /* MENU LIGHTBOX (scrollable text menus — separate from the image #lightbox) */
+  #menu-lightbox {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(58, 53, 48, 0.6);
+    backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 2000;
+  }
+  .menu-modal {
+    background: var(--warm-white);
+    width: 90%; max-width: 650px; max-height: 80vh;
+    border-radius: 12px; padding: 24px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    position: relative;
+  }
+  .menu-title {
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 600; color: var(--charcoal);
+    letter-spacing: 1px; text-transform: uppercase; line-height: 1.2;
+    border-bottom: 1px solid var(--beige);
+    padding: 0 40px 12px; margin-bottom: 20px;
+  }
+  .menu-scroll {
+    overflow-y: auto; flex: 1;
+    padding-right: 8px;
+  }
+  .menu-subnote {
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; color: var(--warm-gray); line-height: 1.5;
+    margin-bottom: 6px;
+  }
+  .menu-subnote.disclaimer { font-style: italic; color: var(--beige); }
+  .menu-section { margin-top: 32px; }
+  .menu-section:first-of-type { margin-top: 14px; }
+  .section-heading {
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 600; color: var(--sage-dark);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .menu-items { display: flex; flex-direction: column; gap: 14px; }
+  .menu-item-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  }
+  .menu-item-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; color: var(--charcoal); font-size: 14px;
+  }
+  .menu-item-price {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600; color: var(--warm-gray); font-size: 13px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .menu-item-desc {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px; color: var(--warm-gray); line-height: 1.5;
+    margin-top: 4px; font-weight: 400; max-width: 90%;
+  }
+  .menu-empty {
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 18px; color: var(--warm-gray); padding: 40px 10px;
+  }
+  .menu-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--ivory); color: var(--warm-gray);
+    border: none; font-size: 16px; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .menu-close:hover { background: var(--beige); color: white; }
+
+  /* GALLERY */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 4px;
+  }
+  .gallery-item {
+    position: relative;
+    background: var(--warm-white);
+    border: 1px solid var(--ivory);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .gallery-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .gallery-edit-btn {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.85); color: var(--sage-dark);
+    border: none; cursor: pointer; font-size: 13px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15); transition: all 0.15s;
+  }
+  .gallery-edit-btn:hover { background: var(--sage); color: white; }
+  .gallery-missing {
+    aspect-ratio: 4/3; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px; padding: 12px;
+    background: var(--ivory); color: var(--warm-gray); text-align: center;
+    font-family: 'Montserrat', sans-serif; font-size: 13px;
+  }
+  .gallery-missing span { font-size: 11px; color: var(--beige); }
+  .gallery-item img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+  }
+  .gallery-caption {
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--warm-gray);
+    line-height: 1.5;
+  }
+  /* PREVIEW SECTIONS (rendered from previewData) */
+  .preview-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; color: var(--charcoal);
+    margin: 28px 0 10px;
+  }
+  .preview-section:first-child .preview-section-title { margin: 0 0 16px; }
+  .preview-section-desc {
+    font-size: 13px; color: var(--warm-gray); line-height: 1.6; margin-bottom: 16px;
+  }
+  .gallery-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--beige);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-style: italic;
+  }
+  .gallery-upload { text-align: center; margin-bottom: 20px; }
+  .gallery-upload-btn {
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: white; background: var(--sage-dark); border: none;
+    border-radius: 24px; padding: 11px 22px; cursor: pointer; transition: background 0.2s;
+  }
+  .gallery-upload-btn:hover { background: var(--sage); }
+  .gallery-upload-btn:disabled { opacity: 0.6; cursor: default; }
+
+  /* LIGHTBOX */
+  .lightbox-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox-overlay.active { display: flex; }
+  .lightbox-box {
+    position: relative;
+    max-width: 80vw;
+    max-height: 80vh;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+  .lightbox-box img {
+    display: block;
+    max-width: 80vw;
+    max-height: 80vh;
+    object-fit: contain;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .lightbox-close:hover { background: rgba(0,0,0,0.85); }
+  .gallery-item img { cursor: zoom-in; }
+  .animal-thumbs img { cursor: zoom-in; }
+
+  /* OPEN ITEMS */
+  .open-item {
+    display: flex;
+    gap: 14px;
+    padding: 14px 18px;
+    background: var(--warm-white);
+    border: 1px solid var(--ivory);
+    border-left: 3px solid var(--gold);
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  .open-item-icon { font-size: 18px; }
+  .open-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--charcoal);
+    margin-bottom: 3px;
+  }
+  .open-item-desc { font-size: 12px; color: var(--warm-gray); line-height: 1.5; }
+  .open-subhead { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--sage-dark); margin: 22px 0 10px; padding-bottom: 5px; border-bottom: 1px solid var(--ivory); }
+  .open-subhead:first-child { margin-top: 4px; }
+
+  /* HOTEL CARD */
+  .hotel-card {
+    background: linear-gradient(135deg, #2C3E2D, #3D5C3A);
+    border-radius: 14px;
+    padding: 24px;
+    color: white;
+    margin-bottom: 24px;
+  }
+  .hotel-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--sage-light);
+    margin-bottom: 6px;
+  }
+  .hotel-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .hotel-dates { font-size: 13px; color: var(--beige); margin-bottom: 14px; }
+  .hotel-detail { font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.7; }
+
+  /* DIVIDER */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--ivory);
+    margin: 24px 0;
+  }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: var(--beige);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+  }
+
+  /* ── ITINERARY EDITOR (desktop only, >480px) ── */
+  .edit-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-bottom: 18px;
+    padding: 8px 16px;
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.5px;
+    color: white; background: var(--sage-dark);
+    border: none; border-radius: 20px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .edit-toggle:hover { background: var(--sage); }
+  body { transition: padding-right 0.28s ease; }
+  body.editing { padding-right: 360px; }
+  .staging-drawer {
+    position: fixed; top: 0; right: 0; height: 100vh; width: 340px; max-width: 86vw;
+    background: var(--warm-white); border-left: 1px solid var(--ivory);
+    box-shadow: -8px 0 28px rgba(0,0,0,0.14);
+    z-index: 201; transform: translateX(100%); transition: transform 0.28s ease;
+    display: flex; flex-direction: column;
+  }
+  .staging-drawer.open { transform: translateX(0); }
+  .staging-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 20px 12px;
+  }
+  .staging-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--charcoal); }
+  .staging-close {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: var(--ivory); color: var(--warm-gray); font-size: 15px; cursor: pointer; flex-shrink: 0;
+  }
+  .staging-close:hover { background: var(--beige); color: white; }
+  .staging-sub { padding: 0 20px 14px; font-size: 12px; color: var(--warm-gray); line-height: 1.5; }
+  #staging-list { overflow-y: auto; padding: 0 16px 24px; flex: 1; }
+  .staging-group-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--sage); margin: 14px 4px 8px;
+  }
+  .staging-group { margin-bottom: 6px; }
+  .staging-group-header {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; margin: 6px 0 4px;
+    background: var(--ivory); border: none; border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--sage-dark); cursor: pointer; text-align: left; transition: background 0.15s;
+  }
+  .staging-group-header:hover { background: #ECE6DA; }
+  .staging-group-label { flex: 1; }
+  .staging-group-count {
+    font-size: 10px; font-weight: 600; color: var(--warm-gray);
+    background: var(--warm-white); border-radius: 10px; padding: 1px 7px;
+  }
+  .staging-group-chev { font-size: 11px; color: var(--sage); transition: transform 0.2s; }
+  .staging-group.open .staging-group-chev { transform: rotate(90deg); }
+  .staging-group-body { display: none; }
+  .staging-group.open .staging-group-body { display: block; }
+  .staging-footer { flex-shrink: 0; border-top: 1px solid var(--ivory); padding: 12px 16px 16px; background: var(--warm-white); }
+  .btn-cancel, .btn-save { border: none; border-radius: 18px; padding: 7px 16px; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s; }
+  .btn-cancel { background: var(--ivory); color: var(--warm-gray); }
+  .btn-cancel:hover { background: var(--beige); color: white; }
+  .btn-save { background: var(--sage-dark); color: white; }
+  .btn-save:hover { background: var(--sage); }
+  .cart-day-badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.4px; color: #4A7A52; background: #E8F3EA; border-radius: 10px; padding: 1px 7px; margin-left: 4px; }
+  .export-btn { width: 100%; margin-bottom: 12px; padding: 9px 14px; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--sage-dark); background: var(--cream); border: 1px solid var(--sage-light); border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+  .export-btn:hover { background: #EAF3E8; border-color: var(--sage); }
+  .export-overlay { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 24px; }
+  .export-overlay.open { display: flex; }
+  .export-panel { background: var(--warm-white); border-radius: 14px; width: 640px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 24px 64px rgba(0,0,0,0.4); }
+  .export-header { display: flex; align-items: center; justify-content: space-between; }
+  .export-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--charcoal); }
+  .export-sub { font-size: 12px; color: var(--warm-gray); margin: 4px 0 12px; }
+  .export-text { flex: 1; min-height: 320px; width: 100%; resize: vertical; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; line-height: 1.5; color: var(--charcoal); background: var(--cream); border: 1px solid var(--ivory); border-radius: 8px; padding: 12px; white-space: pre; }
+  .export-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+  .day-title-input { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: #FAF7F2; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; padding: 1px 8px; width: 100%; max-width: 340px; }
+  .day-title-input:focus { outline: none; border-color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.2); }
+  .staging-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; margin-bottom: 7px;
+    background: var(--cream); border: 1px solid var(--ivory); border-radius: 10px;
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .staging-item:hover { border-color: var(--sage-light); }
+  .staging-item.selected { background: #EAF3E8; border-color: var(--sage); box-shadow: 0 0 0 1px var(--sage); }
+  .staging-item-icon { font-size: 18px; flex-shrink: 0; }
+  .staging-item-name { flex: 1; font-size: 13px; font-weight: 500; color: var(--charcoal); }
+  .staging-handle { color: var(--beige); font-size: 14px; flex-shrink: 0; }
+  .staging-item.selected { cursor: grab; }
+  .staging-empty-note { font-size: 12px; color: var(--warm-gray); font-style: italic; padding: 4px 4px 10px; }
+  .item-remove {
+    align-self: center; flex-shrink: 0;
+    width: 22px; height: 22px; border-radius: 50%;
+    border: none; background: #F5E8E8; color: #B05A5A;
+    font-size: 11px; line-height: 1; cursor: pointer; transition: background 0.15s;
+  }
+  .item-remove:hover { background: #E8C9C9; }
+  .item-drag-handle { align-self: center; flex-shrink: 0; color: var(--beige); font-size: 14px; cursor: grab; }
+  .activity-item[draggable="true"] { cursor: grab; }
+  .activity-item[draggable="true"]:active { cursor: grabbing; }
+  .activity-empty {
+    list-style: none; text-align: center;
+    font-size: 12px; font-style: italic; color: var(--beige);
+    padding: 14px; border: 1px dashed var(--sage-light); border-radius: 8px;
+  }
+
+  /* ===== LOGIN GATE (Stage 1) ===== */
+  #login-screen {
+    position: fixed; inset: 0; z-index: 3000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    background: linear-gradient(160deg, #2C3E2D 0%, #3D5C3A 40%, #5A7554 100%);
+  }
+  .login-card {
+    background: var(--warm-white);
+    width: 100%; max-width: 380px;
+    border-radius: 16px; padding: 36px 32px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    text-align: center;
+  }
+  .login-eyebrow {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--sage); margin-bottom: 10px;
+  }
+  .login-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px; font-weight: 600; color: var(--charcoal); line-height: 1.1; margin-bottom: 6px;
+  }
+  .login-sub {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; color: var(--warm-gray); margin-bottom: 24px;
+  }
+  .login-form { display: flex; flex-direction: column; gap: 12px; }
+  .login-form input {
+    font-family: 'Montserrat', sans-serif; font-size: 14px;
+    padding: 12px 14px; border: 1px solid var(--ivory); border-radius: 10px;
+    background: var(--cream); color: var(--charcoal);
+  }
+  .login-form input:focus { outline: none; border-color: var(--sage-light); }
+  .login-password-wrap { position: relative; width: 100%; }
+  .login-password-wrap input { display: block; width: 100%; padding-right: 44px; }
+  .login-eye {
+    position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; padding: 0;
+    background: none; border: none; border-radius: 8px; cursor: pointer;
+    color: var(--warm-gray); transition: color 0.2s;
+  }
+  .login-eye:hover { color: var(--sage-dark); }
+  .login-btn {
+    margin-top: 4px; padding: 12px;
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: white; background: var(--sage-dark); border: none; border-radius: 24px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .login-btn:hover { background: var(--sage); }
+  .login-btn:disabled { opacity: 0.6; cursor: default; }
+  .login-error { font-family: 'Montserrat', sans-serif; font-size: 12px; color: #B05A5A; min-height: 16px; }
+  .signout-btn {
+    display: none; position: fixed; top: 12px; right: 14px; z-index: 150;
+    font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--sage-dark); background: var(--warm-white); border: 1px solid var(--sage-light);
+    border-radius: 20px; padding: 6px 12px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .signout-btn:hover { background: var(--sage); color: white; border-color: var(--sage); }
+  /* Viewer role: hide every editor-only affordance, on all screen sizes */
+  body.role-viewer .edit-only { display: none !important; }
+  /* Stage 8: offline banner (shown when navigator is offline) */
+  #offline-banner {
+    display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 3001;
+    background: var(--sage-dark); color: var(--cream); text-align: center;
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+    padding: 8px 14px; box-shadow: 0 -2px 10px rgba(0,0,0,0.12);
+  }
+  body.no-session .bucket-item { cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN GATE (Stage 1) — shown by default so app content never flashes; JS hides it once authenticated -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-eyebrow">Private</div>
+    <h1 class="login-title">Welcome</h1>
+    <p class="login-sub">Please sign in to continue.</p>
+    <form id="login-form" class="login-form">
+      <input type="email" id="login-email" placeholder="Email" autocomplete="username" required>
+      <div class="login-password-wrap">
+        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" required>
+        <button type="button" id="login-toggle" class="login-eye" aria-label="Show password" title="Show password"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      </div>
+      <button type="submit" id="login-btn" class="login-btn">Sign In</button>
+      <div id="login-error" class="login-error"></div>
+    </form>
+  </div>
+</div>
+<button id="signout-btn" class="signout-btn">Sign out</button>
+<div id="offline-banner">⚠ Offline — showing your last synced view.</div>
+
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-eyebrow" id="hero-eyebrow"></div>
+    <h1 id="hero-title"></h1>
+    <div class="hero-dates" id="hero-dates"></div>
+    <div class="hero-tagline" id="hero-tagline"></div>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+  <button class="tab-btn" onclick="switchTab('preview')">Preview</button>
+  <button class="tab-btn" onclick="switchTab('itinerary')">Daily Itinerary</button>
+  <button class="tab-btn" onclick="switchTab('activities')">Activities</button>
+  <button class="tab-btn" onclick="switchTab('food')">Food</button>
+  <button class="tab-btn" onclick="switchTab('open')">Open Items</button>
+  <button class="tab-btn" onclick="switchTab('bucket')">Bucket List</button>
+  <button class="tab-btn" onclick="switchTab('animals')">Animal Scrapbook</button>
+  <button class="tab-btn" onclick="switchTab('gallery')">Gallery</button>
+  <button class="tab-btn" onclick="switchTab('costs')">Cart</button>
+</div>
+
+<div class="main">
+
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview" class="tab-panel active">
+    <div class="section-title">The Full Journey</div>
+    <div class="section-sub">Wedding Week → Road Trip → Jackson Hole</div>
+
+    <div class="hotel-card">
+      <div class="hotel-label" id="hotel-label"></div>
+      <div class="hotel-name" id="hotel-name"></div>
+      <div class="hotel-dates" id="hotel-dates"></div>
+      <div class="hotel-detail" id="hotel-detail"></div>
+    </div>
+
+    <div class="timeline">
+      <div id="pretrip-list"></div>
+      <div id="overview-list"></div>
+    </div>
+  </div>
+
+  <!-- ITINERARY TAB -->
+  <div id="tab-itinerary" class="tab-panel">
+    <div class="section-title">Day-by-Day Itinerary</div>
+    <div class="section-sub">August 26 &#8211; September 2</div>
+
+    <button class="edit-toggle edit-only" onclick="openStagingDrawer()">✏️ Edit itinerary</button>
+    <div id="itinerary-list"></div>
+  </div>
+
+  <!-- ACTIVITIES TAB -->
+  <div id="tab-activities" class="tab-panel">
+    <div class="section-title">Activities</div>
+    <div class="section-sub">Scheduled &amp; On the Table</div>
+
+    <div class="activities-grid" id="activities-grid"></div>
+  </div>
+
+  <!-- FOOD TAB -->
+  <div id="tab-food" class="tab-panel">
+    <div class="section-title">Food</div>
+    <div class="section-sub">Where to eat &amp; drink in Jackson</div>
+
+    <div id="food-options-list"></div>
+  </div>
+
+  <!-- BUCKET LIST TAB -->
+  <div id="tab-bucket" class="tab-panel">
+    <div class="section-title">Honeymoon Bucket List</div>
+    <div class="section-sub">Tap to check off as you go</div>
+
+    <ul class="bucket-list" id="bucketList"></ul>
+  </div>
+
+  <!-- ANIMAL SCRAPBOOK TAB -->
+  <div id="tab-animals" class="tab-panel">
+    <div class="section-title">Animal Scrapbook</div>
+    <div class="section-sub">Tap to check off each one you spot</div>
+
+    <div id="animal-scrapbook-list"></div>
+  </div>
+
+  <!-- OPEN ITEMS TAB -->
+  <div id="tab-open" class="tab-panel">
+    <div class="section-title">Open Items</div>
+    <div class="section-sub">Decisions &amp; bookings still needed</div>
+
+    <div id="open-items-list"></div>
+  </div>
+
+  <!-- GALLERY TAB -->
+  <div id="tab-gallery" class="tab-panel">
+    <div class="section-title">Gallery</div>
+    <div class="section-sub">Photos from the trip</div>
+    <div class="gallery-upload">
+      <input type="file" id="gallery-file-input" accept="image/*" multiple style="display:none" onchange="handleGalleryUpload(this.files)">
+      <button type="button" id="gallery-upload-btn" class="gallery-upload-btn" onclick="document.getElementById('gallery-file-input').click()">📷 Upload Photo</button>
+    </div>
+    <div class="gallery-grid" id="gallery-grid-render"></div>
+  </div>
+
+  <!-- PREVIEW TAB -->
+  <div id="tab-preview" class="tab-panel"></div>
+
+  <!-- CART TAB -->
+  <div id="tab-costs" class="tab-panel">
+    <div class="section-title">Cart</div>
+    <div class="section-sub">Reservations &amp; selected extras</div>
+
+    <div id="cart-content"></div>
+
+    <p style="font-size:12px; color: var(--warm-gray); margin-top: 8px; font-style: italic;">All prices are estimates before tax &amp; tip. Reservations are already booked, so no price is shown.</p>
+  </div>
+
+</div>
+
+<aside class="staging-drawer edit-only" id="staging-drawer">
+  <div class="staging-header">
+    <div class="staging-title">Edit Itinerary</div>
+    <button class="staging-close" onclick="closeStagingDrawer()">✕</button>
+  </div>
+  <div class="staging-sub">Tap to select an item — selected items can be dragged into a day. Anything not yet placed appears here.</div>
+  <div id="staging-list"></div>
+  <div class="staging-footer">
+    <button class="export-btn" onclick="openExport()">⬇ Download Updated Files</button>
+    <button class="export-btn" id="seed-btn" onclick="seedContentToCloud()">⬆ Seed content to Supabase</button>
+    <button class="export-btn" id="migrate-img-btn" onclick="migrateImagesToCloud()">🖼 Migrate images to Supabase</button>
+  </div>
+</aside>
+
+<div class="export-overlay edit-only" id="export-overlay">
+  <div class="export-panel">
+    <div class="export-header">
+      <span class="export-title">Updated itinerary.txt — HONEYMOON section</span>
+      <button class="staging-close" onclick="closeExport()">✕</button>
+    </div>
+    <div class="export-sub">Copy this and paste it over the HONEYMOON section of itinerary.txt (the rest of the file is unchanged).</div>
+    <textarea id="export-text" class="export-text" readonly></textarea>
+    <div class="export-actions">
+      <button class="btn-cancel" onclick="closeExport()">Close</button>
+      <button class="btn-save" id="export-copy" onclick="copyExport()">Copy</button>
+      <button class="btn-save" onclick="downloadExport()">Download .txt</button>
+    </div>
+  </div>
+</div>
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox(event)">
+  <div class="lightbox-box">
+    <button class="lightbox-close" onclick="closeLightbox(event, true)">✕</button>
+    <img id="lightbox-img" src="" alt="">
+  </div>
+</div>
+
+<div id="menu-lightbox" onclick="closeMenuLightbox(event)">
+  <div class="menu-modal" onclick="event.stopPropagation()">
+    <button class="menu-close" onclick="closeMenuLightbox(event, true)">✕</button>
+    <div class="menu-title" id="menu-title"></div>
+    <div class="menu-scroll" id="menu-scroll"></div>
+  </div>
+</div>
+
+<footer id="site-footer"></footer>
+
+<!-- Stage 7 cutover: the trip data/*.js files were removed from the load — all content now lives
+     in Supabase and loads after login. The .js files remain on disk as a local backup (not served). -->
+<!-- Supabase: CDN library (global `supabase`) then our client (`sb`). Must load before the app script. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="data/supabase-client.js"></script>
+<script>
+  // ===== CONTENT GLOBALS (Stage 7) — empty until loadCloudContent() fills them after sign-in =====
+  let itineraryState = { days: [], unassignedItems: [] };
+  let activitiesData = [];
+  let foodOptionsData = [];
+  let foodResearchData = {};
+  let foodMenusData = {};
+  let reservationsData = [];
+  let pretripData = [];
+  let openItemsData = [];
+  let bucketlistData = [];
+  let animalScrapbookData = [];
+  let animalImages = {};
+
+  // ===== AUTH GATE (Stage 1) =====
+  // Uses the `sb` client from data/supabase-client.js. The app still renders underneath;
+  // this overlay covers it until a valid session exists. Role comes from app_metadata.role.
+  (function initAuthGate() {
+    const loginScreen = document.getElementById('login-screen');
+    const loginForm   = document.getElementById('login-form');
+    const loginError  = document.getElementById('login-error');
+    const loginBtn    = document.getElementById('login-btn');
+    const signoutBtn  = document.getElementById('signout-btn');
+
+    function applyRole(session) {
+      const role = session && session.user && session.user.app_metadata && session.user.app_metadata.role;
+      document.body.classList.remove('role-editor', 'role-viewer');
+      document.body.classList.add(role === 'editor' ? 'role-editor' : 'role-viewer');
+    }
+    async function showApp(session) {
+      if (session) document.body.classList.remove('no-session');  // Stage 8: real login clears offline read-only mode
+      applyRole(session);
+      await loadCloudContent();   // pull latest content from Supabase
+      await loadChecklistState(); // pull bucket-list + animal-scrapbook checks
+      await loadMediaUrls();      // sign preview + animal image URLs from the media bucket
+      reseedWorkingState();       // rebuild editor state from the cloud content
+      renderAll();                // render every tab from the cloud content
+      renderGallery();            // async; populates the Gallery tab from Storage (fire-and-forget)
+      loginScreen.style.display = 'none';
+      signoutBtn.style.display = 'block';
+    }
+    function showLogin() {
+      document.body.classList.remove('role-editor', 'role-viewer', 'no-session');
+      loginScreen.style.display = 'flex';
+      signoutBtn.style.display = 'none';
+    }
+    // Stage 8: with no valid session, if we're offline AND have cached content, open the trip
+    // read-only from cache instead of the login wall (so a lapsed ~1h token doesn't lock us out).
+    function offlineFallbackOrLogin() {
+      if (!navigator.onLine && localStorage.getItem('offlineContent')) {
+        document.body.classList.add('no-session');
+        showApp(null);
+      } else {
+        showLogin();
+      }
+    }
+
+    // Restore an existing session on load (Supabase persists it in localStorage → survives refresh).
+    sb.auth.getSession()
+      .then(({ data: { session } }) => { session ? showApp(session) : offlineFallbackOrLogin(); })
+      .catch(() => offlineFallbackOrLogin());
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginError.textContent = '';
+      loginBtn.disabled = true; loginBtn.textContent = 'Signing in…';
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      loginBtn.disabled = false; loginBtn.textContent = 'Sign In';
+      if (error) {
+        loginError.textContent = 'Incorrect email or password.';
+      } else {
+        showApp(data.session);
+      }
+    });
+
+    signoutBtn.addEventListener('click', async () => {
+      await sb.auth.signOut();
+      // Stage 8: clear on-device private caches so another account on this device can't read them.
+      try {
+        localStorage.removeItem('offlineContent');
+        localStorage.removeItem('offlineChecklist');
+        localStorage.removeItem('offlineChecklistDirty');
+        localStorage.removeItem('offlineMediaUrls');
+      } catch (e) {}
+      if (window.caches) caches.delete('hnymn-img-v1');
+      showLogin();
+    });
+
+    // Password show/hide eye toggle
+    const pwInput = document.getElementById('login-password');
+    const pwToggle = document.getElementById('login-toggle');
+    const EYE_OFF = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    const EYE_ON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    pwToggle.addEventListener('click', () => {
+      const reveal = pwInput.type === 'password';
+      pwInput.type = reveal ? 'text' : 'password';
+      pwToggle.innerHTML = reveal ? EYE_OFF : EYE_ON;
+      const label = reveal ? 'Hide password' : 'Show password';
+      pwToggle.setAttribute('aria-label', label);
+      pwToggle.setAttribute('title', label);
+    });
+  })();
+
+  // ===== STAGE 2: seed all reference content into Supabase (editor-only, one-time, idempotent) =====
+  async function seedContentToCloud() {
+    const content = {
+      itinerary: currentItineraryValue(),
+      activities: activitiesData,
+      food_options: foodOptionsData,
+      food_research: foodResearchData,
+      food_menus: foodMenusData,
+      reservations: reservationsData,
+      pretrip: pretripData,
+      open_items: openItemsData,
+      bucket_list: bucketlistData,
+      animals: animalScrapbookData,
+      animal_images: animalImages,
+      site: siteData,
+      preview: previewData
+    };
+    const rows = Object.keys(content).map(key => ({ key, value: content[key], updated_at: new Date().toISOString() }));
+    const btn = document.getElementById('seed-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Seeding…'; }
+    const { error } = await sb.from('content').upsert(rows, { onConflict: 'key' });
+    if (btn) { btn.disabled = false; btn.textContent = '⬆ Seed content to Supabase'; }
+    if (error) {
+      alert('Seed failed: ' + error.message + '\n(Make sure you are signed in as the editor account.)');
+    } else {
+      alert('Seeded ' + rows.length + ' content rows to Supabase. ✓');
+    }
+  }
+
+  // ===== STAGE 3a: load content from Supabase and render from it (post-login) =====
+  // Assign a {key:value} content map onto the globals. Shared by the live fetch and the Stage-8 cache.
+  function applyContent(byKey) {
+    if (!byKey) return;
+    if (byKey.itinerary)     itineraryState      = byKey.itinerary;
+    if (byKey.activities)    activitiesData      = byKey.activities;
+    if (byKey.food_options)  foodOptionsData     = byKey.food_options;
+    if (byKey.food_research) foodResearchData    = byKey.food_research;
+    if (byKey.food_menus)    foodMenusData       = byKey.food_menus;
+    if (byKey.reservations)  reservationsData    = byKey.reservations;
+    if (byKey.pretrip)       pretripData         = byKey.pretrip;
+    if (byKey.open_items)    openItemsData       = byKey.open_items;
+    if (byKey.bucket_list)   bucketlistData      = byKey.bucket_list;
+    if (byKey.animals)       animalScrapbookData = byKey.animals;
+    if (byKey.animal_images) animalImages        = byKey.animal_images;
+    if (byKey.site)          siteData            = byKey.site;
+    if (byKey.preview)       previewData         = byKey.preview;
+  }
+  async function loadCloudContent() {
+    try {
+      const { data, error } = await sb.from('content').select('key,value');
+      if (error || !data) throw (error || new Error('no content'));
+      const byKey = {};
+      data.forEach(r => { byKey[r.key] = r.value; });
+      applyContent(byKey);
+      try { localStorage.setItem('offlineContent', JSON.stringify(byKey)); } catch (e) {}  // Stage 8: read-through cache
+      return true;
+    } catch (e) {
+      // Stage 8: offline / fetch failed → render from the last-synced snapshot.
+      try {
+        const cached = localStorage.getItem('offlineContent');
+        if (cached) { applyContent(JSON.parse(cached)); return true; }
+      } catch (e2) {}
+      return false;
+    }
+  }
+  // Rebuild the editor's in-memory working state from the (now cloud) content.
+  function reseedWorkingState() {
+    itineraryDraft  = ensureUids(linkCatalog(seedDraft()));
+    stagingPool     = [];
+    unassignedItems = dedupeUnassigned(JSON.parse(JSON.stringify((itineraryState && itineraryState.unassignedItems) || [])));
+    activityTiers   = {};
+  }
+  // Render every tab from the current globals.
+  function renderAll() {
+    renderSite();
+    renderPreview();
+    renderPretrip();
+    renderOverview();
+    renderItinerary();
+    renderStaging();
+    renderActivities();
+    renderFoodOptions();
+    renderCart();
+    renderOpenItems();
+    renderAnimalScrapbook();
+    renderBucketList();
+    applyEditGating();
+  }
+
+  // ===== STAGE 3b: site (hero/hotel/footer) + preview, extracted to data =====
+  let siteData = {};
+  let previewData = [];
+  function renderSite() {
+    const s = siteData || {};
+    const set = (id, val, asHtml) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (asHtml) el.innerHTML = val || ''; else el.textContent = val || '';
+    };
+    set('hero-eyebrow', s.heroEyebrow);
+    set('hero-title', s.heroTitleHtml, true);
+    set('hero-dates', s.heroDates);
+    set('hero-tagline', s.heroTagline);
+    set('hotel-label', s.hotelLabel);
+    set('hotel-name', s.hotelName);
+    set('hotel-dates', s.hotelDates);
+    set('hotel-detail', s.hotelDetail, true);
+    set('site-footer', s.footer);
+  }
+  function renderPreview() {
+    const panel = document.getElementById('tab-preview');
+    if (!panel) return;
+    panel.innerHTML =
+      '<div class="section-title">Preview</div>' +
+      '<div class="section-sub">Inspiration for the heart</div>' +
+      (previewData || []).map(sec => `
+      <div class="preview-section">
+        <div class="preview-section-title">${sec.title || ''}</div>
+        ${sec.description ? `<div class="preview-section-desc">${sec.description}</div>` : ''}
+        <div class="gallery-grid">
+          ${(sec.images || []).map(img => `
+          <div class="gallery-item">
+            <img src="${mediaUrl(img.src)}" alt="${img.alt || ''}">
+            ${img.caption ? `<div class="gallery-caption">${img.caption}</div>` : ''}
+          </div>`).join('')}
+        </div>
+      </div>`).join('');
+  }
+
+  // ===== STAGE 4: persist itinerary edits + checklist to Supabase =====
+  function escAttr(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+
+  let checklistState = { bucket: [], animals: [] };
+  async function loadChecklistState() {
+    try {
+      const { data } = await sb.from('checklist').select('value').eq('key', 'state').maybeSingle();
+      checklistState = (data && data.value)
+        ? { bucket: data.value.bucket || [], animals: data.value.animals || [] }
+        : { bucket: [], animals: [] };
+      // Stage 8: if local checks haven't synced yet, keep them instead of the (older) server copy.
+      if (localStorage.getItem('offlineChecklistDirty')) {
+        const cached = localStorage.getItem('offlineChecklist');
+        if (cached) { try { checklistState = JSON.parse(cached); } catch (e) {} }
+      } else {
+        try { localStorage.setItem('offlineChecklist', JSON.stringify(checklistState)); } catch (e) {}  // read-through cache
+      }
+    } catch (e) {
+      // Stage 8: offline → hydrate checks from the last-synced cache.
+      try {
+        const cached = localStorage.getItem('offlineChecklist');
+        checklistState = cached ? JSON.parse(cached) : { bucket: [], animals: [] };
+      } catch (e2) { checklistState = { bucket: [], animals: [] }; }
+    }
+  }
+  async function saveChecklistState() {
+    // Stage 8: always mirror locally so checks survive offline + a reload.
+    try { localStorage.setItem('offlineChecklist', JSON.stringify(checklistState)); } catch (e) {}
+    if (!navigator.onLine) { try { localStorage.setItem('offlineChecklistDirty', '1'); } catch (e) {} return; }
+    try {
+      const { error } = await sb.from('checklist').upsert(
+        { key: 'state', value: checklistState, updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+      if (error) throw error;
+      try { localStorage.removeItem('offlineChecklistDirty'); } catch (e) {}  // synced
+    } catch (e) {
+      try { localStorage.setItem('offlineChecklistDirty', '1'); } catch (e2) {}  // queued for reconnect
+    }
+  }
+  // Stage 8: on reconnect, push any queued (offline) checklist change (whole-state, last-write-wins).
+  async function flushChecklistQueue() {
+    if (navigator.onLine && localStorage.getItem('offlineChecklistDirty')) {
+      await saveChecklistState();
+    }
+  }
+  // Stage 8: offline banner + connectivity wiring.
+  function updateOfflineBanner() {
+    const off = !navigator.onLine;
+    document.body.classList.toggle('offline', off);
+    const banner = document.getElementById('offline-banner');
+    if (banner) banner.style.display = off ? 'block' : 'none';
+  }
+  window.addEventListener('online',  () => { updateOfflineBanner(); flushChecklistQueue(); });
+  window.addEventListener('offline', updateOfflineBanner);
+  updateOfflineBanner();
+
+  function currentItineraryValue() {
+    return { days: itineraryDraft, unassignedItems: unassignedItems };
+  }
+  async function saveItineraryToCloud() {
+    if (!document.body.classList.contains('role-editor')) return;  // editor only (RLS also enforces server-side)
+    try {
+      await sb.from('content').upsert(
+        { key: 'itinerary', value: currentItineraryValue(), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+    } catch (e) {}
+  }
+
+  // ===== STAGE 5: gallery photo uploads (private bucket → signed URLs) =====
+  function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  async function renderGallery() {
+    const grid = document.getElementById('gallery-grid-render');
+    if (!grid) return;
+    let rows = [];
+    try {
+      const { data } = await sb.from('gallery').select('id,storage_path,caption,created_at').order('created_at', { ascending: false });
+      rows = data || [];
+    } catch (e) { rows = []; }
+    if (!rows.length) {
+      grid.innerHTML = '<div class="gallery-empty">No photos yet — tap "📷 Upload Photo" to add one.</div>';
+      return;
+    }
+    const paths = rows.map(r => r.storage_path);
+    const urlByPath = {};
+    try {
+      const { data: signed } = await sb.storage.from('gallery').createSignedUrls(paths, 3600);
+      (signed || []).forEach((s, i) => { if (s && s.signedUrl) urlByPath[paths[i]] = s.signedUrl; });
+    } catch (e) {}
+    grid.innerHTML = rows.map(r => {
+      const url = urlByPath[r.storage_path];
+      const cap = r.caption || '';
+      const capA = escAttr(cap);
+      const media = url
+        ? `<img src="${url}" alt="${capA || 'Trip photo'}" loading="lazy">`
+        : `<div class="gallery-missing">⚠ Image unavailable<span>(file moved or deleted)</span></div>`;
+      return `<div class="gallery-item" data-id="${r.id}" data-caption="${capA}">
+        ${media}
+        <button class="gallery-edit-btn" title="Edit caption" onclick="event.stopPropagation(); editGalleryCaption('${r.id}', this)">✎</button>
+        ${cap ? `<div class="gallery-caption">${escHtml(cap)}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+  async function handleGalleryUpload(files) {
+    if (!files || !files.length) return;
+    if (!navigator.onLine) { alert("You're offline — connect to the internet to upload photos."); return; }  // Stage 8
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { alert('Please sign in to upload.'); return; }
+    const btn = document.getElementById('gallery-upload-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Uploading…'; }
+    for (const file of files) {
+      try {
+        const caption = prompt('Caption for "' + file.name + '" (optional):', '') || null;
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: upErr } = await sb.storage.from('gallery').upload(path, file);
+        if (upErr) { alert('Upload failed: ' + upErr.message); continue; }
+        const { error: insErr } = await sb.from('gallery').insert({ storage_path: path, uploaded_by: user.id, caption: caption });
+        if (insErr) { alert('File uploaded but saving it failed: ' + insErr.message); }
+      } catch (e) { alert('Upload error: ' + e.message); }
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '📷 Upload Photo'; }
+    const input = document.getElementById('gallery-file-input');
+    if (input) input.value = '';   // allow re-selecting the same file
+    await renderGallery();
+  }
+  async function editGalleryCaption(id, btn) {
+    if (!navigator.onLine) { alert("You're offline — connect to the internet to edit captions."); return; }  // Stage 8
+    const item = btn.closest('.gallery-item');
+    const cur = (item && item.dataset.caption) || '';
+    const val = prompt('Caption for this photo:', cur);
+    if (val === null) return;  // cancelled
+    try {
+      const { error } = await sb.from('gallery').update({ caption: val }).eq('id', id);
+      if (error) { alert('Could not update caption: ' + error.message); return; }
+    } catch (e) { alert('Could not update caption: ' + e.message); return; }
+    await renderGallery();
+  }
+
+  // ===== STAGE 6: preview + animal images from the private `media` bucket =====
+  function allMediaPaths() {
+    const set = new Set();
+    (previewData || []).forEach(sec => (sec.images || []).forEach(img => { if (img && img.src) set.add(img.src); }));
+    Object.values(animalImages || {}).forEach(arr => (arr || []).forEach(p => { if (p) set.add(p); }));
+    return Array.from(set);
+  }
+  let mediaUrls = {};
+  async function loadMediaUrls() {
+    const paths = allMediaPaths();
+    if (!paths.length) { mediaUrls = {}; return; }
+    try {
+      const { data, error } = await sb.storage.from('media').createSignedUrls(paths, 3600);
+      if (error || !data) throw (error || new Error('no signed urls'));
+      const map = {};
+      data.forEach((s, i) => { if (s && s.signedUrl) map[paths[i]] = s.signedUrl; });
+      mediaUrls = map;
+      try { localStorage.setItem('offlineMediaUrls', JSON.stringify(map)); } catch (e) {}  // Stage 8: reuse offline
+      warmMediaCache();  // Stage 8: proactively cache every media image so all show offline (even un-scrolled)
+    } catch (e) {
+      // Stage 8: offline → reuse the last-synced signed URLs so each <img src> stays a Supabase URL that the
+      // service worker's path-keyed image cache can satisfy. (Falling back to the local path would miss that
+      // cache and — post-cutover — those local files aren't even deployed.)
+      try {
+        const cached = localStorage.getItem('offlineMediaUrls');
+        mediaUrls = cached ? JSON.parse(cached) : {};
+      } catch (e2) { mediaUrls = {}; }
+    }
+  }
+  // Stage 8: fetch every media image once while online so the service worker caches its bytes for offline.
+  // Cheap on repeat loads: already-cached images are served from the SW cache without hitting the network.
+  function warmMediaCache() {
+    if (!navigator.onLine) return;
+    Object.keys(mediaUrls).forEach(path => {
+      const url = mediaUrls[path];
+      if (url) fetch(url).catch(() => {});
+    });
+  }
+  // Falls back to the local file path if the media bucket has no signed URL (e.g. pre-migration on localhost).
+  function mediaUrl(path) { return (mediaUrls && mediaUrls[path]) || path; }
+  // Editor-only one-time migration: fetch each local image (served by the dev server) and upload it to the media bucket.
+  async function migrateImagesToCloud() {
+    if (!document.body.classList.contains('role-editor')) return;
+    const paths = allMediaPaths();
+    const btn = document.getElementById('migrate-img-btn');
+    if (btn) btn.disabled = true;
+    let ok = 0, fail = 0;
+    for (const path of paths) {
+      try {
+        const res = await fetch(path);
+        if (!res.ok) { fail++; }
+        else {
+          const blob = await res.blob();
+          const { error } = await sb.storage.from('media').upload(path, blob, { upsert: true, contentType: blob.type || undefined });
+          if (error) fail++; else ok++;
+        }
+      } catch (e) { fail++; }
+      if (btn) btn.textContent = 'Migrating… ' + (ok + fail) + '/' + paths.length;
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '🖼 Migrate images to Supabase'; }
+    alert('Images migrated: ' + ok + ' uploaded, ' + fail + ' failed (of ' + paths.length + '). Reload to load them via signed URLs.');
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  function toggleDay(card) {
+    card.classList.toggle('open');
+  }
+
+  function toggleBucket(el) {
+    if (document.body.classList.contains('no-session')) return;  // Stage 8: offline read-only (no auth to persist)
+    const on = el.classList.toggle('checked');
+    const kind = el.dataset.kind, key = el.dataset.key;
+    if (!kind || !key) return;
+    const arr = checklistState[kind] || (checklistState[kind] = []);
+    const i = arr.indexOf(key);
+    if (on && i === -1) arr.push(key);
+    else if (!on && i !== -1) arr.splice(i, 1);
+    saveChecklistState();
+  }
+
+  // ── ACTIVITY TIER SELECTIONS (in-memory only; resets to defaults on reload) ──
+  let activityTiers = {};
+
+  // ── UNASSIGNED ITEMS — catalog items selected via "+" but not yet placed in a day ──
+  // Seeded fresh from itineraryState on every load (no persistence). De-duped by type:id.
+  function dedupeUnassigned(items) {
+    const seen = new Set();
+    return items.filter(u => {
+      const key = u.type + ':' + u.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  let unassignedItems = dedupeUnassigned(JSON.parse(JSON.stringify(itineraryState.unassignedItems)));
+
+  function toggleActivity(id) {
+    if (placedDayOf('act:' + id) !== null) return;
+    const idx = unassignedItems.findIndex(u => u.type === 'activity' && u.id === id);
+    if (idx === -1) unassignedItems.push({ type: 'activity', id, uid: newUid(), time: null });
+    else unassignedItems.splice(idx, 1);
+    renderActivities(); renderCart(); renderStaging();
+  }
+  function toggleFood(id) {
+    if (placedDayOf('food:' + id) !== null) return;
+    const idx = unassignedItems.findIndex(u => u.type === 'food' && u.id === id);
+    if (idx === -1) unassignedItems.push({ type: 'food', id, uid: newUid(), time: null });
+    else unassignedItems.splice(idx, 1);
+    renderFoodOptions(); renderCart(); renderStaging();
+  }
+  function activityAmount(a) {
+    if (a.tiers) {
+      const tid = activityTiers[a.id] || a.tiers[0].id;
+      const t = a.tiers.find(x => x.id === tid) || a.tiers[0];
+      return t.amount;
+    }
+    return a.amount || 0;
+  }
+  function activityTierLabel(a) {
+    if (!a.tiers) return null;
+    const tid = activityTiers[a.id] || a.tiers[0].id;
+    const t = a.tiers.find(x => x.id === tid) || a.tiers[0];
+    return t.label;
+  }
+  function setActivityTier(id, tierId) {
+    activityTiers[id] = tierId;
+    renderActivities(); renderCart();
+  }
+
+  function fmt(n) {
+    return '$' + n.toLocaleString();
+  }
+
+  // ── CATALOG LOOKUP UTILITIES (registry resolution by id) ──
+  // Guard against empty/malformed ids so blank registry rows can't be matched.
+  function getActivityById(id) { return id ? (activitiesData.find(a => a.id === id) || null) : null; }
+  function getFoodById(id) { return id ? (foodOptionsData.flatMap(g => g.items).find(i => i.id === id) || null) : null; }
+
+  // foodOptionsData has no reliable icon → fall back to a category-appropriate emoji.
+  const FOOD_CATEGORY_ICONS = { Dinner: '🍽️', Lunch: '🍔', Breakfast: '🥞', Snacks: '🧇', Coffee: '☕' };
+  function getFoodCategory(id) {
+    for (const g of foodOptionsData) { if (g.items.some(i => i.id === id)) return g.category; }
+    return null;
+  }
+  function foodIconById(id) {
+    const f = getFoodById(id);
+    if (f && f.icon) return f.icon;
+    return FOOD_CATEGORY_ICONS[getFoodCategory(id)] || '🍽️';
+  }
+  function activityIconById(id) {
+    const a = getActivityById(id);
+    return (a && a.icon) ? a.icon : '📌';
+  }
+
+  // Resolves a catalog item reference to a full display object. Custom items pass through unchanged.
+  // Inline fields override catalog defaults, but blank inline values never erase resolved display data.
+  function expandItem(item) {
+    if (!item.type || item.type === 'custom') return item;
+    let base;
+    if (item.type === 'activity') {
+      const a = getActivityById(item.id);
+      if (!a) return item;
+      base = { icon: activityIconById(a.id), name: a.name, detail: a.description, sourceId: 'act:' + a.id };
+    } else if (item.type === 'food') {
+      const f = getFoodById(item.id);
+      if (!f) return item;
+      base = { icon: foodIconById(f.id), name: f.name, detail: f.cost, sourceId: 'food:' + f.id };
+    } else {
+      return item;
+    }
+    const merged = { ...base, ...item };
+    if (!item.icon) merged.icon = base.icon;
+    if (!item.name) merged.name = base.name;
+    if (item.detail == null || item.detail === '') merged.detail = base.detail;
+    return merged;
+  }
+
+  function renderCart() {
+    const el = document.getElementById('cart-content');
+    if (!el) return;
+    let html = '';
+
+    // Reservations (already booked; no prices, not selectable)
+    html += '<div class="cost-card"><div class="cost-header"><span>Reservations</span></div>';
+    html += reservationsData.map(r => `
+      <div class="cost-row">
+        <span class="cost-name">${r.name}</span>
+        <span style="font-size:12px; font-weight:500; color:var(--warm-gray);">${r.dateTime}</span>
+      </div>`).join('');
+    html += '</div>';
+
+    // Activities — placed in a day OR in unassignedItems
+    const acts = activitiesData.filter(a =>
+      placedDayOf('act:' + a.id) !== null || unassignedItems.some(u => u.type === 'activity' && u.id === a.id)
+    );
+    const actTotal = acts.reduce((s, a) => s + activityAmount(a), 0);
+    html += '<div class="cost-card"><div class="cost-header"><span>Activities</span></div>';
+    html += acts.length
+      ? acts.map(a => {
+          const pd = placedDayOf('act:' + a.id);
+          return `
+          <div class="cost-row">
+            <span class="cost-name">${a.name}${a.tiers ? ' — ' + activityTierLabel(a) : ''}${pd ? ` <span class="cart-day-badge">Day ${pd}</span>` : ''}</span>
+            <span class="cost-amount">${a.tiers ? fmt(activityAmount(a)) : a.price}</span>
+          </div>`;
+        }).join('')
+      : '<div class="cost-row"><span class="cost-name" style="font-style:italic; color:var(--warm-gray);">None selected yet</span></div>';
+    html += `<div class="cost-total-row"><div>Activities Subtotal</div><span class="cost-amount">${fmt(actTotal)}</span></div></div>`;
+
+    // Food — placed in a day OR in unassignedItems
+    const foods = foodOptionsData.flatMap(g => g.items).filter(i =>
+      placedDayOf('food:' + i.id) !== null || unassignedItems.some(u => u.type === 'food' && u.id === i.id)
+    );
+    const foodTotal = foods.reduce((s, i) => s + (i.amount || 0), 0);
+    html += '<div class="cost-card"><div class="cost-header"><span>Food</span></div>';
+    html += foods.length
+      ? foods.map(i => {
+          const pd = placedDayOf('food:' + i.id);
+          return `
+          <div class="cost-row">
+            <span class="cost-name">${i.name}${pd ? ` <span class="cart-day-badge">Day ${pd}</span>` : ''}</span>
+            <span class="cost-amount">${i.cost || (i.amount != null ? fmt(i.amount) : '—')}</span>
+          </div>`;
+        }).join('')
+      : '<div class="cost-row"><span class="cost-name" style="font-style:italic; color:var(--warm-gray);">None selected yet</span></div>';
+    html += `<div class="cost-total-row"><div>Food Subtotal</div><span class="cost-amount">${fmt(foodTotal)}</span></div></div>`;
+
+    // Grand total (Activities + Food; reservations excluded)
+    html += `<div class="cost-card"><div class="cost-total-row"><div><div>Grand Total</div><div class="cost-total-sub">Activities + Food (estimate)</div></div><span class="cost-amount">${fmt(actTotal + foodTotal)}</span></div></div>`;
+
+    el.innerHTML = html;
+  }
+
+  function renderPretrip() {
+    const list = document.getElementById('pretrip-list');
+    list.innerHTML = pretripData.map(item => `
+      <div class="tl-item ${item.type}">
+        <div class="tl-date">${item.date}</div>
+        <div class="tl-title">${item.title}</div>
+        <div class="tl-desc">${item.desc}</div>
+      </div>
+    `).join('');
+  }
+  renderPretrip();
+
+  // Safely resolve a display name for a placed item: prefer the inline name, then fall back
+  // to the catalog registry by id (or sourceId) for catalog items with no inline name.
+  function overviewItemName(act) {
+    if (act.name) return act.name;
+    if (act.type === 'activity') { const a = getActivityById(act.id); if (a) return a.name; }
+    if (act.type === 'food') { const f = getFoodById(act.id); if (f) return f.name; }
+    const sid = act.sourceId || '';
+    if (sid.indexOf('act:') === 0) { const a = getActivityById(sid.slice(4)); if (a) return a.name; }
+    if (sid.indexOf('food:') === 0) { const f = getFoodById(sid.slice(5)); if (f) return f.name; }
+    return null;
+  }
+  // Dynamic Overview timeline — renders one .tl-item per day from itineraryDraft, reusing the
+  // exact same tags/classes as the original static markup. The description is the day's activity
+  // and meal names joined with " · ".
+  function renderOverview() {
+    const list = document.getElementById('overview-list');
+    if (!list) return;
+    const lastDay = itineraryDraft.length ? itineraryDraft[itineraryDraft.length - 1].dayNumber : null;
+    list.innerHTML = itineraryDraft.map(day => {
+      const names = day.activities.map(overviewItemName).filter(Boolean);
+      const desc = names.length ? names.join(' · ') : '—';
+      const travel = day.dayNumber === lastDay ? ' travel' : '';
+      return `
+      <div class="tl-item${travel}">
+        <div class="tl-date">${day.dateLabel}</div>
+        <div class="tl-title">${day.title} — Day ${day.dayNumber}</div>
+        <div class="tl-desc">${desc}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderItinerary() {
+    const list = document.getElementById('itinerary-list');
+    if (!list) return;
+    const edit = (typeof isDesktopEdit === 'function') && isDesktopEdit() && document.body.classList.contains('editing');
+    const open = new Set(Array.from(list.querySelectorAll('.day-card.open')).map(c => c.getAttribute('data-day')));
+    list.innerHTML = itineraryDraft.map(day => `
+      <div class="day-card" data-day="${day.dayNumber}">
+        <div class="day-header" onclick="toggleDay(this.closest('.day-card'))">
+          <div class="day-number">${day.dayNumber}</div>
+          <div class="day-title-wrap">
+            <div class="day-date-label">${day.dateLabel}</div>
+            ${edit ? `<input class="day-title-input" value="${(day.title || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" onclick="event.stopPropagation()" onchange="setDayTitle(${day.dayNumber}, this.value)">` : `<div class="day-title">${day.title}</div>`}
+          </div>
+          <div class="day-chevron">&#9660;</div>
+        </div>
+        <div class="day-body" ${edit ? `ondragover="allowDrop(event)" ondrop="dropOnDay(event, ${day.dayNumber})"` : ''}>
+          <ul class="activity-list">
+            ${day.activities.map(a => `
+              <li class="activity-item" data-uid="${a.uid}" ${edit ? `draggable="true" ondragstart="dragStartItem(event, '${a.uid}')" ondragover="allowDrop(event)" ondrop="dropOnItem(event, ${day.dayNumber}, '${a.uid}')"` : ''}>
+                ${edit ? '<span class="item-drag-handle" title="Drag to reorder">⠿</span>' : ''}
+                <div class="activity-icon">${a.icon}</div>
+                <div class="activity-content">
+                  <div class="activity-name">${a.name}</div>
+                  ${a.detail ? `<div class="activity-detail">${a.detail}</div>` : ''}
+                </div>
+                ${a.badge ? `<span class="activity-badge ${a.badgeType}">${a.badge}</span>` : ''}
+                ${edit ? `<button class="item-remove" title="Remove from day" onclick="removeItem(event, ${day.dayNumber}, '${a.uid}')">✕</button>` : ''}
+              </li>
+            `).join('')}
+            ${edit && day.activities.length === 0 ? '<li class="activity-empty">Drop items here</li>' : ''}
+          </ul>
+        </div>
+      </div>
+    `).join('');
+    Array.from(list.querySelectorAll('.day-card')).forEach(c => { if (open.has(c.getAttribute('data-day'))) c.classList.add('open'); });
+    if (!open.size && list.firstElementChild) list.firstElementChild.classList.add('open');
+  }
+
+  function renderFoodOptions() {
+    const list = document.getElementById('food-options-list');
+    list.innerHTML = foodOptionsData.map(group => `
+      <div class="food-group">
+        <div class="food-group-title">${group.category}</div>
+        ${group.items.map(item => {
+          const placedDay = placedDayOf('food:' + item.id);
+          const locked = placedDay !== null;
+          const inCart = locked || unassignedItems.some(u => u.type === 'food' && u.id === item.id);
+          const cartTitle = locked ? ('Placed on Day ' + placedDay + ' — remove it from the itinerary to unselect') : (inCart ? 'Remove from cart' : 'Add to cart');
+          const icon = (item.icon && item.icon.trim()) ? item.icon : (FOOD_CATEGORY_ICONS[group.category] || '🍽️');
+          const research = (typeof foodResearchData !== 'undefined') ? foodResearchData[item.id] : null;
+          const summary = (research && research.summary) ? research.summary : '';
+          const hasMenu = (typeof foodMenusData !== 'undefined') && !!foodMenusData[item.id];
+          return `
+          <div class="food-item">
+            <div class="food-item-row">
+              <div class="activity-icon">${icon}</div>
+              <div class="food-text">
+                <div class="food-name">${item.name}</div>
+                ${item.cost ? `<div class="food-cost">${item.cost}</div>` : ''}
+              </div>
+              <div class="food-actions">
+                ${hasMenu ? `<button class="food-menu-btn" onclick="openMenuLightbox('${item.id}')">📖 Menu</button>` : ''}
+                ${summary ? `<button class="food-menu-btn" onclick="toggleFoodSummary('${item.id}', this)">🔽 See More</button>` : ''}
+                <div class="cart-check ${inCart ? 'in-cart' : ''}${locked ? ' locked' : ''}" onclick="toggleFood('${item.id}')" title="${cartTitle}">${locked ? '🔒' : (inCart ? '−' : '+')}</div>
+              </div>
+            </div>
+            ${summary ? `<div class="food-summary-panel" id="summary-${item.id}">${summary}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    `).join('');
+  }
+
+  function renderAnimalScrapbook() {
+    const list = document.getElementById('animal-scrapbook-list');
+    list.innerHTML = animalScrapbookData.map(group => `
+      <div class="animal-group">
+        <div class="animal-group-title">${group.category}</div>
+        <ul class="bucket-list">
+          ${group.items.map(item => `
+            <li class="bucket-item${(checklistState.animals || []).includes(item.name) ? ' checked' : ''}" data-kind="animals" data-key="${escAttr(item.name)}" onclick="toggleBucket(this)">
+              <div class="bucket-check">&#10003;</div>
+              <div class="animal-text">
+                <div class="animal-name">${item.name}</div>
+                ${item.note ? `<div class="animal-note">${item.note}</div>` : ''}
+              </div>
+              ${(animalImages[item.name] || []).length ? `<div class="animal-thumbs">${(animalImages[item.name] || []).map(src => `<img src="${mediaUrl(src)}" alt="${item.name}" loading="lazy">`).join('')}</div>` : ''}
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+    `).join('');
+  }
+  renderAnimalScrapbook();
+
+  function renderBucketList() {
+    const list = document.getElementById('bucketList');
+    const checked = checklistState.bucket || [];
+    list.innerHTML = bucketlistData.map(text => `
+      <li class="bucket-item${checked.includes(text) ? ' checked' : ''}" data-kind="bucket" data-key="${escAttr(text)}" onclick="toggleBucket(this)">
+        <div class="bucket-check">&#10003;</div>
+        ${text}
+      </li>
+    `).join('');
+  }
+  renderBucketList();
+
+  // Reservations are the "already booked" set. Matched fuzzily by name so a catalog name like
+  // "Jackson Hole White Water Rafting" still matches the reservation "White Water Rafting".
+  function isBooked(name) {
+    if (!name) return false;
+    const n = name.toLowerCase();
+    return reservationsData.some(r => {
+      const rn = (r.name || '').toLowerCase();
+      return rn && (n.includes(rn) || rn.includes(n));
+    });
+  }
+  // Scan the live itinerary for placed catalog items that still need action:
+  //   • activities that cost money (amount > 0), and
+  //   • food in the Dinner category (needs a table reservation),
+  // excluding anything already booked. De-duped by sourceId.
+  function deriveOpenItemsFromItinerary() {
+    const out = [];
+    const seen = new Set();
+    itineraryDraft.forEach(day => day.activities.forEach(a => {
+      const sid = a.sourceId || '';
+      if (!sid || seen.has(sid)) return;
+      if (sid.indexOf('act:') === 0) {
+        const act = getActivityById(sid.slice(4));
+        if (act && activityAmount(act) > 0 && !isBooked(act.name)) {
+          seen.add(sid);
+          out.push({
+            icon: act.icon || '💵',
+            title: act.name + ' — Book & Pay',
+            desc: `Scheduled on Day ${day.dayNumber} · ${act.price || fmt(activityAmount(act))}. Not booked yet — reserve and pay ahead.`
+          });
+        }
+      } else if (sid.indexOf('food:') === 0) {
+        const food = getFoodById(sid.slice(5));
+        if (food && getFoodCategory(food.id) === 'Dinner' && !isBooked(food.name)) {
+          seen.add(sid);
+          out.push({
+            icon: foodIconById(food.id),
+            title: food.name + ' — Reserve a Table',
+            desc: `Dinner scheduled on Day ${day.dayNumber}. No reservation on file — call ahead to book.`
+          });
+        }
+      }
+    }));
+    return out;
+  }
+  function renderOpenItems() {
+    const list = document.getElementById('open-items-list');
+    if (!list) return;
+    const itemHtml = item => `
+      <div class="open-item">
+        <div class="open-item-icon">${item.icon}</div>
+        <div>
+          <div class="open-item-title">${item.title}</div>
+          <div class="open-item-desc">${item.desc}</div>
+        </div>
+      </div>`;
+    const derived = deriveOpenItemsFromItinerary();
+    let html = '';
+    if (derived.length) {
+      html += '<div class="open-subhead">Needs Booking — From Your Itinerary</div>';
+      html += derived.map(itemHtml).join('');
+      html += '<div class="open-subhead">Other Reminders</div>';
+    }
+    html += openItemsData.map(itemHtml).join('');
+    list.innerHTML = html;
+  }
+
+  function renderActivities() {
+    const grid = document.getElementById('activities-grid');
+    grid.innerHTML = activitiesData.filter(a => a.id && a.name).map(a => {
+      const placedDay = placedDayOf('act:' + a.id);
+      const locked = placedDay !== null;
+      const inUnassigned = unassignedItems.some(u => u.type === 'activity' && u.id === a.id);
+      const inCart = locked || inUnassigned;
+      const statusClass = placedDay ? 'status-scheduled' : 'status-option';
+      const statusText = placedDay ? ('Scheduled · Day ' + placedDay) : 'Option';
+      const cartTitle = locked ? ('Placed on Day ' + placedDay + ' — remove it from the itinerary to unselect') : (inCart ? 'Remove from cart' : 'Add to cart');
+      return `
+      <div class="act-card">
+        <div class="cart-check act-cart ${inCart ? 'in-cart' : ''}${locked ? ' locked' : ''}" onclick="toggleActivity('${a.id}')" title="${cartTitle}">${locked ? '🔒' : (inCart ? '−' : '+')}</div>
+        <div class="act-card-icon">${a.icon}</div>
+        <span class="act-status ${statusClass}">${statusText}</span>
+        <div class="act-card-name">${a.name}</div>
+        <div class="act-card-detail">${a.description}</div>
+        <div class="act-card-price">${a.price}</div>
+        ${a.tiers ? `<div class="tier-select">${a.tiers.map(t => {
+          const sel = (activityTiers[a.id] || a.tiers[0].id) === t.id;
+          return `<button class="tier-chip ${sel ? 'sel' : ''}" onclick="setActivityTier('${a.id}','${t.id}')">${t.label} · ${fmt(t.amount)}</button>`;
+        }).join('')}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // renderActivities() / renderCart() run from the editor init, after itineraryDraft exists.
+
+  // ── ITINERARY EDITOR (desktop-only draft, staging drawer, drag-to-place) ──
+  const EDIT_BP = 480;
+  function isDesktopEdit() { return window.innerWidth > EDIT_BP; }
+
+  let _uidc = 0;
+  function newUid() { return 'u' + Date.now().toString(36) + (_uidc++).toString(36); }
+  function seedDraft() {
+    return itineraryState.days.map(day => ({
+      ...day,
+      activities: day.activities.map(a => expandItem(JSON.parse(JSON.stringify(a))))
+    }));
+  }
+  function ensureUids(days) { days.forEach(d => d.activities.forEach(a => { if (!a.uid) a.uid = newUid(); })); return days; }
+  function catalogNameToSourceId() {
+    const map = {};
+    activitiesData.forEach(a => {
+      if (!a.id || !a.name) return;
+      map[a.name] = 'act:' + a.id;
+      if (Array.isArray(a.aliases)) a.aliases.forEach(n => { if (n) map[n] = 'act:' + a.id; });
+    });
+    foodOptionsData.flatMap(g => g.items).forEach(i => { if (i.id && i.name && !(i.name in map)) map[i.name] = 'food:' + i.id; });
+    return map;
+  }
+  function linkCatalog(days) {
+    const map = catalogNameToSourceId();
+    map['Jenny Lake boat shuttle → Cascade Canyon Trail (4 hrs)'] = 'act:jenny-lake-cascade';
+    map['Cascade Canyon'] = 'act:jenny-lake-cascade';
+    map['Jenny Lake Boat Shuttle'] = 'act:jenny-lake-cascade';
+    map['Cascade Canyon Hike'] = 'act:jenny-lake-cascade';
+
+    days.forEach(d => d.activities.forEach(a => {
+      if (!a.sourceId) {
+        if (map[a.name]) {
+          a.sourceId = map[a.name];
+        } else if (a.name) {
+          for (const key in map) {
+            if (!key) continue;
+            if (a.name.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(a.name.toLowerCase())) {
+              a.sourceId = map[key];
+              break;
+            }
+          }
+        }
+      }
+    }));
+    return days;
+  }
+  // ── IN-MEMORY WORKING STATE ──
+  // No persistence: the editor seeds fresh from itineraryState on every page load and
+  // resets on refresh. No localStorage, no baseline, no undo stack, no autosave.
+  let itineraryDraft = ensureUids(linkCatalog(seedDraft()));
+  let stagingPool = [];
+
+  function setDayTitle(dayNumber, value) {
+    const day = itineraryDraft.find(d => d.dayNumber === dayNumber);
+    if (!day || day.title === value) return;
+    day.title = value;
+    commitDraftChange();
+  }
+  // Single re-render entry point for every in-session mutation.
+  function commitDraftChange() {
+    renderItinerary();
+    renderStaging();
+    renderActivities();
+    renderFoodOptions();
+    renderCart();
+    renderOpenItems();
+    renderOverview();
+    saveItineraryToCloud();
+  }
+  function buildExportText() {
+    const div = '════════════════════════════════════════';
+    let out = div + '\n' + 'HONEYMOON' + '\n' + div + '\n';
+    out += itineraryDraft.map(day => {
+      let s = '\n' + 'DAY ' + day.dayNumber + ' — ' + day.dateLabel + ' — ' + day.title;
+      day.activities.forEach(a => {
+        s += '\n' + '  - ' + a.name;
+        if (a.detail) s += '\n' + '    ' + a.detail;
+      });
+      return s;
+    }).join('\n');
+    return out;
+  }
+  function openExport() {
+    if (!isDesktopEdit()) return;
+    document.getElementById('export-text').value = buildExportText();
+    document.getElementById('export-overlay').classList.add('open');
+  }
+  function closeExport() { document.getElementById('export-overlay').classList.remove('open'); }
+  function copyExport() {
+    const t = document.getElementById('export-text');
+    t.select();
+    try { navigator.clipboard.writeText(t.value); } catch (e) { try { document.execCommand('copy'); } catch (e2) {} }
+    const b = document.getElementById('export-copy'); if (b) { b.textContent = 'Copied!'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
+  }
+  function downloadExport() {
+    const blob = new Blob([buildExportText()], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'itinerary-honeymoon-updated.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  const stagingSelected = new Set();
+  function placedSourceIds() {
+    const s = new Set();
+    itineraryDraft.forEach(d => d.activities.forEach(a => { if (a.sourceId) s.add(a.sourceId); }));
+    return s;
+  }
+  function placedDayOf(sourceId) {
+    for (const d of itineraryDraft) {
+      if (d.activities.some(a => a.sourceId === sourceId)) return d.dayNumber;
+    }
+    return null;
+  }
+  const stagingGroupsOpen = new Set();
+  function toggleStagingGroup(key) {
+    if (stagingGroupsOpen.has(key)) stagingGroupsOpen.delete(key); else stagingGroupsOpen.add(key);
+    renderStaging();
+  }
+  function renderStaging() {
+    const el = document.getElementById('staging-list');
+    if (!el) return;
+
+    const placed = placedSourceIds();
+    const seenCatalogIds = new Set();
+
+    const unscheduled = unassignedItems
+      .filter(u => !placed.has(u.type + ':' + u.id))
+      .map(u => {
+        if (u.type === 'activity') {
+          const a = getActivityById(u.id);
+          return { id: 'ua:' + u.uid, catalogId: u.id, icon: activityIconById(u.id), name: a ? a.name : u.id };
+        }
+        const f = getFoodById(u.id);
+        return { id: 'ua:' + u.uid, catalogId: u.id, icon: foodIconById(u.id), name: f ? f.name : u.id };
+      })
+      .filter(item => {
+        const normId = (item.catalogId || '').includes('jenny') || (item.catalogId || '').includes('cascade')
+          ? 'jenny-lake-cascade'
+          : item.catalogId;
+        if (seenCatalogIds.has(normId)) return false;
+        seenCatalogIds.add(normId);
+        return true;
+      });
+
+    // Pool holds items removed from days. Re-resolve any lost/placeholder icon from the registry.
+    const pool = stagingPool.map(p => {
+      let icon = p.icon;
+      if (!icon || icon === '📌') {
+        const sid = p.sourceId || '';
+        if (sid.indexOf('act:') === 0) icon = activityIconById(sid.slice(4));
+        else if (sid.indexOf('food:') === 0) icon = foodIconById(sid.slice(5));
+        else icon = '📌';
+      }
+      return { id: 'pool:' + p.uid, icon, name: p.name };
+    });
+
+    const itemHtml = it => {
+      const sel = stagingSelected.has(it.id);
+      return `<div class="staging-item ${sel ? 'selected' : ''}" draggable="${sel ? 'true' : 'false'}" ondragstart="dragStartStaging(event, '${it.id}')" onclick="toggleStagingSelect('${it.id}')">
+        <span class="staging-item-icon">${it.icon}</span>
+        <span class="staging-item-name">${it.name}</span>
+        <span class="staging-handle" title="Select, then drag into a day">⠿</span>
+      </div>`;
+    };
+
+    let html = '';
+    if (unscheduled.length) {
+      html += '<div class="staging-group-title">Unscheduled</div>' + unscheduled.map(itemHtml).join('');
+    } else {
+      html += '<div class="staging-empty-note">No unscheduled items — use + on Activities or Food tabs to add.</div>';
+    }
+    if (pool.length) html += '<div class="staging-group-title">Removed from days</div>' + pool.map(itemHtml).join('');
+    el.innerHTML = html;
+  }
+  function toggleStagingSelect(id) {
+    if (stagingSelected.has(id)) stagingSelected.delete(id); else stagingSelected.add(id);
+    renderStaging();
+  }
+
+  let dragData = null;
+  function allowDrop(ev) { ev.preventDefault(); }
+  function dragStartStaging(ev, id) {
+    if (id.indexOf('pool:') === 0) dragData = { type: 'pool', uid: id.slice(5) };
+    else if (id.indexOf('ua:') === 0) dragData = { type: 'unassigned', uid: id.slice(3) };
+    if (ev.dataTransfer) ev.dataTransfer.effectAllowed = 'copyMove';
+  }
+  function takeDragged() {
+    if (!dragData) return null;
+    if (dragData.type === 'pool') {
+      const i = stagingPool.findIndex(x => x.uid === dragData.uid);
+      return i === -1 ? null : stagingPool.splice(i, 1)[0];
+    }
+    if (dragData.type === 'unassigned') {
+      const i = unassignedItems.findIndex(u => u.uid === dragData.uid);
+      if (i === -1) return null;
+      const u = unassignedItems.splice(i, 1)[0];
+      return expandItem(JSON.parse(JSON.stringify(u)));
+    }
+    if (dragData.type === 'item') {
+      for (const d of itineraryDraft) {
+        const i = d.activities.findIndex(a => a.uid === dragData.uid);
+        if (i !== -1) return d.activities.splice(i, 1)[0];
+      }
+    }
+    return null;
+  }
+  function dropOnDay(ev, dayNumber) {
+    ev.preventDefault();
+    const day = itineraryDraft.find(d => d.dayNumber === dayNumber);
+    const item = takeDragged();
+    dragData = null;
+    if (!day || !item) { renderStaging(); return; }
+    day.activities.push(item);
+    commitDraftChange();
+  }
+  function dragStartItem(ev, uid) {
+    dragData = { type: 'item', uid: uid };
+    if (ev.dataTransfer) ev.dataTransfer.effectAllowed = 'move';
+  }
+  function dropOnItem(ev, dayNumber, beforeUid) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (dragData && dragData.type === 'item' && dragData.uid === beforeUid) { dragData = null; return; }
+    const day = itineraryDraft.find(d => d.dayNumber === dayNumber);
+    const item = takeDragged();
+    dragData = null;
+    if (!day || !item) { renderStaging(); return; }
+    const idx = day.activities.findIndex(a => a.uid === beforeUid);
+    if (idx === -1) day.activities.push(item); else day.activities.splice(idx, 0, item);
+    commitDraftChange();
+  }
+  function removeItem(ev, dayNumber, uid) {
+    if (ev) ev.stopPropagation();
+    const day = itineraryDraft.find(d => d.dayNumber === dayNumber);
+    if (!day) return;
+    const i = day.activities.findIndex(a => a.uid === uid);
+    if (i === -1) return;
+    const removed = day.activities.splice(i, 1)[0];
+    if (removed.sourceId) {
+      // Catalog item — return to unassignedItems so it stays "in cart" (icon re-resolved from registry).
+      // Map the sourceId prefix (act/food) back to the canonical type, and de-dupe to avoid duplication.
+      const [prefix, catalogId] = removed.sourceId.split(':');
+      const type = prefix === 'act' ? 'activity' : 'food';
+      if (!unassignedItems.some(u => u.type === type && u.id === catalogId)) {
+        unassignedItems.push({ type, id: catalogId, uid: newUid(), time: removed.time || null });
+      }
+    } else {
+      stagingPool.push(removed);
+    }
+    commitDraftChange();
+  }
+
+  function openStagingDrawer() {
+    if (!isDesktopEdit()) return;
+    const open = document.getElementById('staging-drawer').classList.toggle('open');
+    document.body.classList.toggle('editing', open);
+    renderItinerary();
+  }
+  function closeStagingDrawer() {
+    const d = document.getElementById('staging-drawer'); if (d) d.classList.remove('open');
+    document.body.classList.remove('editing');
+    renderItinerary();
+  }
+  let lastDesktopEdit = isDesktopEdit();
+  function applyEditGating() {
+    const now = isDesktopEdit();
+    if (!now) closeStagingDrawer();
+    if (now !== lastDesktopEdit) { lastDesktopEdit = now; renderItinerary(); }
+  }
+  window.addEventListener('resize', applyEditGating);
+
+  renderItinerary();
+  renderStaging();
+  renderActivities();
+  renderFoodOptions();
+  renderCart();
+  renderOpenItems();
+  renderOverview();
+  renderSite();
+  renderPreview();
+  applyEditGating();
+  // Lightbox
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('active');
+  }
+  function closeLightbox(e, force) {
+    if (force || e.target === document.getElementById('lightbox')) {
+      document.getElementById('lightbox').classList.remove('active');
+      document.getElementById('lightbox-img').src = '';
+    }
+  }
+  // ── TEXT MENU LIGHTBOX (scrollable restaurant menus — separate from the image lightbox above) ──
+  function openMenuLightbox(restaurantId) {
+    const box = document.getElementById('menu-scroll');
+    const titleEl = document.getElementById('menu-title');
+    if (!box) return;
+    const food = (typeof getFoodById === 'function') ? getFoodById(restaurantId) : null;
+    const menuData = (typeof foodMenusData !== 'undefined') ? foodMenusData[restaurantId] : null;
+    titleEl.textContent = food ? food.name : 'Menu';
+
+    // Build the menu DOM from the structured schema (no raw string dumps).
+    box.innerHTML = '';
+    const subnote = (text, extraClass) => {
+      const el = document.createElement('div');
+      el.className = 'menu-subnote' + (extraClass ? ' ' + extraClass : '');
+      el.textContent = text;
+      box.appendChild(el);
+    };
+    if (menuData && menuData.locationNote) subnote(menuData.locationNote);
+    if (menuData && menuData.priceDisclaimer) subnote(menuData.priceDisclaimer, 'disclaimer');
+
+    const sections = (menuData && Array.isArray(menuData.sections)) ? menuData.sections : [];
+    if (sections.length) {
+      sections.forEach(section => {
+        const sec = document.createElement('div');
+        sec.className = 'menu-section';
+        const heading = document.createElement('div');
+        heading.className = 'section-heading';
+        heading.textContent = section.title || '';
+        sec.appendChild(heading);
+        const items = document.createElement('div');
+        items.className = 'menu-items';
+        (section.items || []).forEach(item => {
+          const wrap = document.createElement('div');
+          wrap.className = 'menu-item';
+          const head = document.createElement('div');
+          head.className = 'menu-item-head';
+          const name = document.createElement('span');
+          name.className = 'menu-item-name';
+          name.textContent = item.name || '';
+          head.appendChild(name);
+          if (item.price) {
+            const price = document.createElement('span');
+            price.className = 'menu-item-price';
+            price.textContent = item.price;
+            head.appendChild(price);
+          }
+          wrap.appendChild(head);
+          if (item.description) {
+            const desc = document.createElement('div');
+            desc.className = 'menu-item-desc';
+            desc.textContent = item.description;
+            wrap.appendChild(desc);
+          }
+          items.appendChild(wrap);
+        });
+        sec.appendChild(items);
+        box.appendChild(sec);
+      });
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'menu-empty';
+      empty.textContent = 'Menu details are currently being finalized.';
+      box.appendChild(empty);
+    }
+
+    box.scrollTop = 0;
+    document.getElementById('menu-lightbox').style.display = 'flex';
+  }
+  function closeMenuLightbox(e, force) {
+    if (force || !e || e.target === document.getElementById('menu-lightbox')) {
+      document.getElementById('menu-lightbox').style.display = 'none';
+    }
+  }
+  // Collapsible per-item research summary in the Food tab ("🔽 See More" / "🔼 See Less").
+  function toggleFoodSummary(itemId, btn) {
+    const panel = document.getElementById(`summary-${itemId}`);
+    if (!panel) return;
+    const isHidden = panel.style.display === 'none' || panel.style.display === '';
+    if (isHidden) {
+      panel.style.display = 'block';
+      btn.innerHTML = '🔼 See Less';
+    } else {
+      panel.style.display = 'none';
+      btn.innerHTML = '🔽 See More';
+    }
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.getElementById('lightbox').classList.remove('active');
+      closeMenuLightbox(null, true);
+    }
+  });
+  document.addEventListener('click', e => {
+    const img = e.target.closest && e.target.closest('#tab-preview img, #tab-gallery img, #tab-animals img');
+    if (img) { e.stopPropagation(); openLightbox(img.currentSrc || img.src); }
+  });
+
+  // ===== STAGE 8b: register the offline service worker (secure contexts only: https / localhost) =====
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
