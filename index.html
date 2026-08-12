@@ -2132,7 +2132,7 @@
 
   // ── ITINERARY EDITOR (desktop-only draft, staging drawer, drag-to-place) ──
   const EDIT_BP = 480;
-  function isDesktopEdit() { return true; }
+  function isDesktopEdit() { return return window.innerWidth > EDIT_BP; }
   // return window.innerWidth
   let _uidc = 0;
   function newUid() { return 'u' + Date.now().toString(36) + (_uidc++).toString(36); }
