@@ -3,14 +3,14 @@
 {
   "name": "Honeymoon Plan",
   "schemaVersion": 1,
-  "description": "Interactive honeymoon itinerary viewer for Jackson Hole, Aug 26–Sep 2. Tabs for overview timeline, day-by-day itinerary, activities explorer, cost breakdown, interactive bucket list, and open items."
+  "description": "Interactive honeymoon itinerary viewer"
 }
 </script>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jackson Hole Honeymoon — Aug 26 – Sep 2</title>
+<title>Our Honeymoon</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -2036,8 +2036,6 @@
   }
   renderBucketList();
 
-  // Reservations are the "already booked" set. Matched fuzzily by name so a catalog name like
-  // "Jackson Hole White Water Rafting" still matches the reservation "White Water Rafting".
   function isBooked(name) {
     if (!name) return false;
     const n = name.toLowerCase();
@@ -2132,8 +2130,8 @@
 
   // ── ITINERARY EDITOR (desktop-only draft, staging drawer, drag-to-place) ──
   const EDIT_BP = 480;
-  function isDesktopEdit() { return return window.innerWidth > EDIT_BP; }
-  // return window.innerWidth
+  function isDesktopEdit() { return window.innerWidth > EDIT_BP; }
+  
   let _uidc = 0;
   function newUid() { return 'u' + Date.now().toString(36) + (_uidc++).toString(36); }
   function seedDraft() {
