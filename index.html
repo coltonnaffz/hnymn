@@ -13,8 +13,8 @@
     <title>hnymn</title>
     <link
       rel="icon"
-      href="./assets/icons/hnymn-basic.png"
-      type="image/x-icon"
+      href="https://xhatyapslpxsembgwbdt.supabase.co/storage/v1/object/public/site-assets/icons/hnymn-basic.png"
+      type="image/png"
     />
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap"
@@ -40,7 +40,9 @@
       <button class="tab-btn active" onclick="switchTab('overview', event)">
         Overview
       </button>
-      <button class="tab-btn" onclick="switchTab('preview', event)">Preview</button>
+      <button class="tab-btn" onclick="switchTab('preview', event)">
+        Preview
+      </button>
       <button class="tab-btn" onclick="switchTab('itinerary', event)">
         Daily Itinerary
       </button>
@@ -48,12 +50,18 @@
         Activities
       </button>
       <button class="tab-btn" onclick="switchTab('food', event)">Food</button>
-      <button class="tab-btn" onclick="switchTab('open', event)">Open Items</button>
-      <button class="tab-btn" onclick="switchTab('bucket', event)">Bucket List</button>
+      <button class="tab-btn" onclick="switchTab('open', event)">
+        Open Items
+      </button>
+      <button class="tab-btn" onclick="switchTab('bucket', event)">
+        Bucket List
+      </button>
       <button class="tab-btn" onclick="switchTab('animals', event)">
         Animal Scrapbook
       </button>
-      <button class="tab-btn" onclick="switchTab('gallery', event)">Gallery</button>
+      <button class="tab-btn" onclick="switchTab('gallery', event)">
+        Gallery
+      </button>
       <button class="tab-btn" onclick="switchTab('costs', event)">Cart</button>
     </div>
 
@@ -358,7 +366,10 @@
               return true;
             }
           } catch (cacheError) {
-            console.error("Unable to read the saved offline content:", cacheError);
+            console.error(
+              "Unable to read the saved offline content:",
+              cacheError,
+            );
           }
           console.error(
             "Unable to load Supabase content and no saved copy is available.",
@@ -537,7 +548,10 @@
             localStorage.removeItem("offlineChecklistDirty");
           } catch (e) {} // synced
         } catch (error) {
-          console.error("Unable to save checklist state; it will be retried:", error);
+          console.error(
+            "Unable to save checklist state; it will be retried:",
+            error,
+          );
           try {
             localStorage.setItem("offlineChecklistDirty", "1");
           } catch (e2) {} // queued for reconnect
@@ -2178,7 +2192,10 @@
         // Register the app's offline cache after all page assets have loaded.
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("sw.js").catch((error) => {
-            console.warn("Unable to register the offline service worker:", error);
+            console.warn(
+              "Unable to register the offline service worker:",
+              error,
+            );
           });
         });
       }
