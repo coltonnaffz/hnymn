@@ -71,12 +71,12 @@ Authentication and page state
   on the body. CSS uses these classes to gate editing controls.
 - showApp(session): loads the content and supporting state, rebuilds the
   working itinerary, renders the views, and shows Sign out for signed-in users.
-- offlineFallbackOrLogin(): opens cached content read-only when offline, or
-  sends the visitor to login.html.
+- offlineFallbackOrHome(): opens cached content read-only when offline, or
+  sends signed-out visitors to home.html.
 - sign-out click handler: calls Supabase sign-out, clears local private caches,
-  and routes to login.html.
+  and routes to home.html.
 - getSession promise handlers: restore a saved login session and choose the
-  app or login route.
+  app or welcome page.
 
 Cloud content and rendering
 - applyContent(byKey): copies Supabase content values into app data variables.

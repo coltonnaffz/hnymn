@@ -7,10 +7,16 @@
 //   • Fonts + Supabase CDN → cache-first (versioned/immutable).
 // Because the shell re-caches on every online load, the VERSION only needs bumping for changes to THIS file.
 
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL_CACHE = "hnymn-shell-" + VERSION;
 const IMG_CACHE = "hnymn-img-" + VERSION; // keep aligned with the sign-out cache cleanup in index.html
-const PRECACHE = ["./", "index.html", "data/supabase-client.js"];
+const PRECACHE = [
+  "./",
+  "index.html",
+  "home.html",
+  "login.html",
+  "data/supabase-client.js",
+];
 const CDN_HOSTS = [
   "fonts.googleapis.com",
   "fonts.gstatic.com",
@@ -95,10 +101,11 @@ async function navigationStrategy(req) {
   const cache = await caches.open(SHELL_CACHE);
   try {
     const res = await fetch(req);
-    if (res && res.ok) cache.put("index.html", res.clone()); // self-updating shell
+    if (res && res.ok) cache.put(req, res.clone());
     return res;
   } catch (e) {
     return (
+      (await cache.match(req)) ||
       (await cache.match("index.html")) ||
       (await cache.match("./")) ||
       Response.error()

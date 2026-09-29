@@ -18,7 +18,7 @@
     />
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body class="auth-pending">
     <div id="offline-banner">
       ⚠ You are offline — some features may be unavailable.
     </div>
@@ -268,18 +268,19 @@
         reseedWorkingState(); // rebuild editor state from the cloud content
         renderAll(); // render every tab from the cloud content
         renderGallery(); // async; populates the Gallery tab from Storage (fire-and-forget)
+        document.body.classList.remove("auth-pending");
         signoutBtn.style.display = session ? "block" : "none";
       }
 
       // Stage 8: with no valid session, if we're offline AND have cached content, open the trip
       // read-only from cache instead of the login wall (so a lapsed ~1h token doesn't lock us out).
-      // Route offline users to the cached read-only app; otherwise send them to sign-in.
-      function offlineFallbackOrLogin() {
+      // Route offline users to cached content; otherwise show the public welcome page.
+      function offlineFallbackOrHome() {
         if (!navigator.onLine && localStorage.getItem("offlineContent")) {
           document.body.classList.add("no-session");
           showApp(null);
         } else {
-          window.location.href = "login.html";
+          window.location.replace("home.html");
         }
       }
       // Restore an existing session on load (Supabase persists it in localStorage → survives refresh).
@@ -287,12 +288,12 @@
       sb.auth
         .getSession()
         .then(({ data: { session } }) => {
-          session ? showApp(session) : offlineFallbackOrLogin();
+          session ? showApp(session) : offlineFallbackOrHome();
         })
         // Log session-restore failures, then use the same offline/login routing.
         .catch((error) => {
           console.error("Unable to restore the Supabase session:", error);
-          offlineFallbackOrLogin();
+          offlineFallbackOrHome();
         });
 
       // Sign out and clear locally cached private content before returning to the login page.
@@ -311,8 +312,8 @@
           localStorage.removeItem("offlineChecklist");
           localStorage.removeItem("offlineChecklistDirty");
         } catch (e) {}
-        if (window.caches) caches.delete("hnymn-img-v2");
-        window.location.href = "login.html";
+        if (window.caches) caches.delete("hnymn-img-v3");
+        window.location.replace("home.html");
       });
 
       // ===== STAGE 3a: load content from Supabase and render from it (post-login) =====
