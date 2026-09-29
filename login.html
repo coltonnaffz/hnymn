@@ -1,4 +1,5 @@
 <!doctype html>
+
 <script type="application/json" id="cowork-artifact-meta">
   {
     "name": "hnymn",
@@ -6,15 +7,18 @@
     "description": "Interactive itinerary builder"
   }
 </script>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>hnymn</title>
+
     <link
       rel="icon"
       href="https://xhatyapslpxsembgwbdt.supabase.co/storage/v1/object/public/site-assets/icons/hnymn-basic.png"
-      type="x-icon"
+      type="image/png"
     />
     <link
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap"
@@ -22,8 +26,8 @@
     />
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
-    <!-- LOGIN GATE (Stage 1) — shown by default so app content never flashes; JS hides it once authenticated-->
     <div id="login-screen">
       <div class="login-card">
         <div class="login-eyebrow">Private</div>
@@ -74,6 +78,7 @@
         </form>
       </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="data/supabase-client.js"></script>
     <script>
@@ -95,6 +100,7 @@
         });
 
       // Submit credentials to Supabase and route successful authentication back to the app.
+
       loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         loginError.textContent = "";
