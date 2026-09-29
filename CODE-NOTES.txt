@@ -46,10 +46,11 @@ Where the data comes from
   loadCloudContent() reads those records and applyContent() assigns each key
   to the matching in-memory data variable.
 - The "checklist" table stores bucket-list and animal checks.
-- The private "gallery" and "media" Storage buckets hold uploaded photos and
-  app illustrations. The app asks Supabase for signed URLs to show them.
-- localStorage keeps a last-loaded content snapshot, checklist state, and signed
-  media URLs for offline use. It is a cache, not the authoritative database.
+- The private "gallery" Storage bucket holds uploaded photos; the public
+  "site-assets" bucket holds app illustrations. Gallery photos use signed
+  URLs, while illustrations use public object URLs.
+- localStorage keeps a last-loaded content snapshot and checklist state for
+  offline use. It is a cache, not the authoritative database.
 - sw.js caches the app shell and image bytes to improve offline behavior.
 
 When editing, the app changes itineraryDraft in memory. commitDraftChange()
@@ -108,11 +109,9 @@ Itinerary persistence, photos, and media
 - handleGalleryUpload(files): uploads selected images and their metadata.
 - editGalleryCaption(id, button): edits and saves a gallery photo caption.
 - allMediaPaths(): collects the unique image paths used in Preview and Animals.
-- loadMediaUrls(): obtains signed URLs and falls back to the saved URL cache.
+- loadMediaUrls(): builds public URLs for Preview and Animal images.
 - warmMediaCache(): fetches image URLs in the background for the service worker.
-- mediaUrl(path): returns the signed URL for a path, or the original path.
-- migrateImagesToCloud(): one-time editor maintenance helper for legacy local
-  images. It is not connected to a visible button in the current page.
+- mediaUrl(path): returns the public URL for a path, or the original path.
 
 Tabs and catalog selections
 - switchTab(name, event): activates a tab and its navigation button.

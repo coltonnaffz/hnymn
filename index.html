@@ -264,7 +264,7 @@
         applyRole(session);
         await loadCloudContent(); // pull latest content from Supabase
         await loadChecklistState(); // pull bucket-list + animal-scrapbook checks
-        await loadMediaUrls(); // sign preview + animal image URLs from the media bucket
+        loadMediaUrls(); // build public preview + animal image URLs
         reseedWorkingState(); // rebuild editor state from the cloud content
         renderAll(); // render every tab from the cloud content
         renderGallery(); // async; populates the Gallery tab from Storage (fire-and-forget)
@@ -310,9 +310,8 @@
           localStorage.removeItem("offlineContent");
           localStorage.removeItem("offlineChecklist");
           localStorage.removeItem("offlineChecklistDirty");
-          localStorage.removeItem("offlineMediaUrls");
         } catch (e) {}
-        if (window.caches) caches.delete("hnymn-img-v1");
+        if (window.caches) caches.delete("hnymn-img-v2");
         window.location.href = "login.html";
       });
 
@@ -429,7 +428,7 @@
         set("hotel-detail", s.hotelDetail, true);
         set("site-footer", s.footer);
       }
-      // Build the Preview tab from its data and resolve image paths to signed URLs.
+      // Build the Preview tab from its data and resolve image paths to public URLs.
       function renderPreview() {
         const panel = document.getElementById("tab-preview");
         if (!panel) return;
@@ -761,21 +760,40 @@
       const MEDIA_OBJECT_ROOT = "media/images-jackson-wyoming/";
       // Convert category-relative paths to object paths inside the public Storage bucket.
       function mediaObjectPath(path) {
-        const cleanPath = String(path || "").replace(/^\/+/, "");
-        if (cleanPath.startsWith(MEDIA_OBJECT_ROOT)) return cleanPath;
-        if (cleanPath.startsWith("images-jackson-wyoming/")) {
-          return `media/${cleanPath}`;
+        let cleanPath = String(path || "").replace(/^\/+/, "");
+        if (/^https?:\/\//i.test(cleanPath)) {
+          try {
+            const url = new URL(cleanPath);
+            const storagePath = url.pathname.match(
+              /\/storage\/v1\/object\/(?:public|sign|authenticated)\/[^/]+\/(.+)$/,
+            );
+            if (url.origin !== new URL(SUPABASE_URL).origin || !storagePath) {
+              return null;
+            }
+            cleanPath = decodeURIComponent(storagePath[1]);
+          } catch (e) {
+            return null;
+          }
         }
-        return `${MEDIA_OBJECT_ROOT}${cleanPath}`;
+        let objectPath = cleanPath.startsWith(MEDIA_OBJECT_ROOT)
+          ? cleanPath
+          : cleanPath.startsWith("images-jackson-wyoming/")
+            ? `media/${cleanPath}`
+            : `${MEDIA_OBJECT_ROOT}${cleanPath}`;
+        return objectPath.replace(
+          `${MEDIA_OBJECT_ROOT}images/`,
+          MEDIA_OBJECT_ROOT,
+        );
       }
       // Public URLs can be built locally, including while offline; warm the SW cache when online.
-      async function loadMediaUrls() {
+      function loadMediaUrls() {
         const paths = allMediaPaths();
         const bucket = sb.storage.from("site-assets");
         mediaUrls = Object.fromEntries(
           paths.map((path) => {
-            if (/^https?:\/\//i.test(path)) return [path, path];
-            const { data } = bucket.getPublicUrl(mediaObjectPath(path));
+            const objectPath = mediaObjectPath(path);
+            if (!objectPath) return [path, path];
+            const { data } = bucket.getPublicUrl(objectPath);
             return [path, data.publicUrl];
           }),
         );
@@ -794,51 +812,6 @@
       // Resolve a stored media path to its public Supabase URL.
       function mediaUrl(path) {
         return (mediaUrls && mediaUrls[path]) || path;
-      }
-      // Editor-only one-time migration: fetch each local image (served by the dev server) and upload it to the media bucket.
-      // One-time maintenance helper for copying legacy local images into Supabase Storage.
-      async function migrateImagesToCloud() {
-        if (!document.body.classList.contains("role-editor")) return;
-        const paths = allMediaPaths();
-        const btn = document.getElementById("migrate-img-btn");
-        if (btn) btn.disabled = true;
-        let ok = 0,
-          fail = 0;
-        for (const path of paths) {
-          try {
-            const res = await fetch(path);
-            if (!res.ok) {
-              fail++;
-            } else {
-              const blob = await res.blob();
-              const { error } = await sb.storage
-                .from("media")
-                .upload(path, blob, {
-                  upsert: true,
-                  contentType: blob.type || undefined,
-                });
-              if (error) fail++;
-              else ok++;
-            }
-          } catch (e) {
-            fail++;
-          }
-          if (btn)
-            btn.textContent = "Migrating… " + (ok + fail) + "/" + paths.length;
-        }
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "🖼 Migrate images to Supabase";
-        }
-        alert(
-          "Images migrated: " +
-            ok +
-            " uploaded, " +
-            fail +
-            " failed (of " +
-            paths.length +
-            "). Reload to load them via signed URLs.",
-        );
       }
 
       // Activate the requested tab panel and mark its clicked navigation button active.
