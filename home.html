@@ -1,0 +1,49 @@
+<!doctype html>
+
+<html
+  lang="en"
+  data-cowork-artifact-meta='{
+    "name":"hnymn","schemaVersion":1,"description":"Interactive itinerary builder"
+  }'
+  data-color-mode="auto"
+  data-light-theme="light"
+  data-dark-theme="dark"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hnymn</title>
+  </head>
+  <link
+    rel="icon"
+    href="https://xhatyapslpxsembgwbdt.supabase.co/storage/v1/object/public/site-assets/icons/hnymn-basic.png"
+    type="image/png"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+
+  <body>
+    <div id="offline-banner">
+      ⚠ You are offline — some features may be unavailable.
+    </div>
+
+    <div class="hero">
+      <div class="hero-content">
+        <div class="hero-eyebrow" id="hero-eyebrow"></div>
+        <h1 id="hero-title"></h1>
+        <div class="hero-dates" id="hero-dates"></div>
+        <div class="hero-tagline" id="hero-tagline"></div>
+      </div>
+    </div>
+
+    <footer id="site-footer"></footer>
+    <button id="signout-btn" class="signout-btn" type="button">Sign out</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="data/supabase-client.js"></script>
+    <script></script>
+  </body>
+</html>

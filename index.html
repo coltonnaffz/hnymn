@@ -1,16 +1,12 @@
 <!doctype html>
-<script type="application/json" id="cowork-artifact-meta">
-  {
-    "name": "hnymn",
-    "schemaVersion": 1,
-    "description": "Interactive itinerary builder"
-  }
-</script>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>hnymn</title>
+
+    <title>my hnymn</title>
+
     <link
       rel="icon"
       href="https://xhatyapslpxsembgwbdt.supabase.co/storage/v1/object/public/site-assets/icons/hnymn-basic.png"
@@ -744,7 +740,7 @@
         await renderGallery();
       }
 
-      // ===== STAGE 6: preview + animal images from the private `media` bucket =====
+      // ===== STAGE 6: preview + animal images from the public `site-assets` bucket =====
       // Collect unique storage paths used by Preview and Animal Scrapbook images.
       function allMediaPaths() {
         const set = new Set();
@@ -760,39 +756,30 @@
         );
         return Array.from(set);
       }
+
       let mediaUrls = {};
-      // Request signed image URLs and fall back to the locally cached URL map offline.
+      const MEDIA_OBJECT_ROOT = "media/images-jackson-wyoming/";
+      // Convert category-relative paths to object paths inside the public Storage bucket.
+      function mediaObjectPath(path) {
+        const cleanPath = String(path || "").replace(/^\/+/, "");
+        if (cleanPath.startsWith(MEDIA_OBJECT_ROOT)) return cleanPath;
+        if (cleanPath.startsWith("images-jackson-wyoming/")) {
+          return `media/${cleanPath}`;
+        }
+        return `${MEDIA_OBJECT_ROOT}${cleanPath}`;
+      }
+      // Public URLs can be built locally, including while offline; warm the SW cache when online.
       async function loadMediaUrls() {
         const paths = allMediaPaths();
-        if (!paths.length) {
-          mediaUrls = {};
-          return;
-        }
-        try {
-          const { data, error } = await sb.storage
-            .from("media")
-            .createSignedUrls(paths, 3600);
-          if (error || !data) throw error || new Error("no signed urls");
-          const map = {};
-          data.forEach((s, i) => {
-            if (s && s.signedUrl) map[paths[i]] = s.signedUrl;
-          });
-          mediaUrls = map;
-          try {
-            localStorage.setItem("offlineMediaUrls", JSON.stringify(map));
-          } catch (e) {} // Stage 8: reuse offline
-          warmMediaCache(); // Stage 8: proactively cache every media image so all show offline (even un-scrolled)
-        } catch (e) {
-          // Stage 8: offline → reuse the last-synced signed URLs so each <img src> stays a Supabase URL that the
-          // service worker's path-keyed image cache can satisfy. (Falling back to the local path would miss that
-          // cache and — post-cutover — those local files aren't even deployed.)
-          try {
-            const cached = localStorage.getItem("offlineMediaUrls");
-            mediaUrls = cached ? JSON.parse(cached) : {};
-          } catch (e2) {
-            mediaUrls = {};
-          }
-        }
+        const bucket = sb.storage.from("site-assets");
+        mediaUrls = Object.fromEntries(
+          paths.map((path) => {
+            if (/^https?:\/\//i.test(path)) return [path, path];
+            const { data } = bucket.getPublicUrl(mediaObjectPath(path));
+            return [path, data.publicUrl];
+          }),
+        );
+        warmMediaCache();
       }
       // Stage 8: fetch every media image once while online so the service worker caches its bytes for offline.
       // Cheap on repeat loads: already-cached images are served from the SW cache without hitting the network.
@@ -804,8 +791,7 @@
           if (url) fetch(url).catch(() => {});
         });
       }
-      // Falls back to the local file path if the media bucket has no signed URL (e.g. pre-migration on localhost).
-      // Resolve a media path to its signed cloud URL or its original path.
+      // Resolve a stored media path to its public Supabase URL.
       function mediaUrl(path) {
         return (mediaUrls && mediaUrls[path]) || path;
       }

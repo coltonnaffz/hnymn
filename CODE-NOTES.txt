@@ -1,0 +1,251 @@
+HNYMN APP - CODE NOTES
+=====================
+
+Purpose
+-------
+This guide describes how index.html, login.html, style.css, Supabase, and the
+offline service worker fit together. It is intended as a map for learning the
+code, not as a replacement for the source comments.
+
+The stylesheet in this project is named style.css (singular). There is no
+styles.css or login-html file; this guide uses the actual filenames.
+
+
+How a browser request moves through the app
+-------------------------------------------
+1. The browser opens index.html, loads style.css, the Supabase JavaScript
+   library from its CDN, and data/supabase-client.js.
+2. supabase-client.js creates the shared client named sb. Both HTML pages load
+   the same client so they see the same persisted Supabase login session.
+3. index.html asks Supabase for the saved session with sb.auth.getSession().
+   If signed in, it loads the content, checklist, and image URLs, then renders
+   the app. If signed out, it navigates to login.html.
+4. When the app is offline and a saved content snapshot exists, index.html
+   displays that snapshot in read-only mode instead of sending the visitor to
+   the login page.
+5. login.html checks for an existing session. If one exists it returns to
+   index.html. Otherwise, submitting the form calls Supabase password sign-in.
+   Successful sign-in returns to index.html; a failed sign-in stays on the form.
+6. The Sign out button on index.html signs out, clears private cached app data,
+   and navigates back to login.html.
+
+In short:
+  index.html -> (no session) -> login.html
+  login.html -> (successful sign-in) -> index.html
+  index.html -> (sign out) -> login.html
+
+The pages use relative paths, so they should be deployed together with the
+data folder, style.css, and sw.js at the same site root.
+
+
+Where the data comes from
+-------------------------
+- Supabase Auth identifies the visitor. The role in user app_metadata controls
+  whether editor-only controls are shown.
+- The Supabase "content" table stores the trip content as key/value records.
+  loadCloudContent() reads those records and applyContent() assigns each key
+  to the matching in-memory data variable.
+- The "checklist" table stores bucket-list and animal checks.
+- The private "gallery" and "media" Storage buckets hold uploaded photos and
+  app illustrations. The app asks Supabase for signed URLs to show them.
+- localStorage keeps a last-loaded content snapshot, checklist state, and signed
+  media URLs for offline use. It is a cache, not the authoritative database.
+- sw.js caches the app shell and image bytes to improve offline behavior.
+
+When editing, the app changes itineraryDraft in memory. commitDraftChange()
+refreshes the affected views and calls saveItineraryToCloud(). The editor also
+has an explicit Save changes button that flushes the itinerary and checklist.
+Checklist changes are mirrored locally and queued for retry when offline.
+
+Home page: home.html functions
+-------------------------------
+
+
+
+Main page: index.html functions
+-------------------------------
+
+Authentication and page state
+- applyRole(session): reads the user's role and sets role-editor or role-viewer
+  on the body. CSS uses these classes to gate editing controls.
+- showApp(session): loads the content and supporting state, rebuilds the
+  working itinerary, renders the views, and shows Sign out for signed-in users.
+- offlineFallbackOrLogin(): opens cached content read-only when offline, or
+  sends the visitor to login.html.
+- sign-out click handler: calls Supabase sign-out, clears local private caches,
+  and routes to login.html.
+- getSession promise handlers: restore a saved login session and choose the
+  app or login route.
+
+Cloud content and rendering
+- applyContent(byKey): copies Supabase content values into app data variables.
+- loadCloudContent(): fetches the content table; falls back to the local
+  snapshot if the network request fails.
+- reseedWorkingState(): creates a fresh editor draft from saved itinerary data.
+- renderAll(): refreshes all app sections after content is ready.
+- renderSite(): fills the hero, hotel card, and footer from site data.
+- renderSite's set(id, val, asHtml) helper: updates a page element as text, or
+  as HTML for configured rich-text fields.
+- renderPreview(): creates the Preview image sections.
+- escAttr(value): escapes text for use inside generated HTML attributes.
+- escHtml(value): escapes text for use as generated HTML content.
+
+Checklist and offline behavior
+- loadChecklistState(): reads checks from Supabase and preserves unsynced local
+  changes when available.
+- saveChecklistState(): mirrors checklist changes locally and writes to
+  Supabase, leaving a dirty marker when a retry is needed.
+- flushChecklistQueue(): retries the checklist write after connectivity returns.
+- updateOfflineBanner(): synchronizes the offline banner and body CSS class.
+- online event handler: updates the banner and retries pending checklist data.
+- offline event handler: updates the banner when the browser disconnects.
+
+Itinerary persistence, photos, and media
+- currentItineraryValue(): packages the current days and unassigned items in
+  the shape stored in Supabase.
+- saveItineraryToCloud(): writes the itinerary for editor-role users.
+- renderGallery(): loads gallery rows, creates signed URLs, and renders photos.
+- handleGalleryUpload(files): uploads selected images and their metadata.
+- editGalleryCaption(id, button): edits and saves a gallery photo caption.
+- allMediaPaths(): collects the unique image paths used in Preview and Animals.
+- loadMediaUrls(): obtains signed URLs and falls back to the saved URL cache.
+- warmMediaCache(): fetches image URLs in the background for the service worker.
+- mediaUrl(path): returns the signed URL for a path, or the original path.
+- migrateImagesToCloud(): one-time editor maintenance helper for legacy local
+  images. It is not connected to a visible button in the current page.
+
+Tabs and catalog selections
+- switchTab(name, event): activates a tab and its navigation button.
+- toggleDay(card): opens or closes an itinerary day card.
+- toggleBucket(element): toggles a bucket/animal check and saves it.
+- dedupeUnassigned(items): removes duplicate not-yet-placed catalog selections.
+- toggleActivity(id): adds or removes an activity in the unassigned cart.
+- toggleFood(id): adds or removes food in the unassigned cart.
+- activityAmount(activity): returns the activity amount for its selected tier.
+- activityTierLabel(activity): returns the selected tier's display label.
+- setActivityTier(id, tierId): changes an activity's price tier and refreshes
+  the Activities and Cart views.
+- fmt(amount): formats an amount with a dollar sign and grouping separators.
+- getActivityById(id): finds an activity in the activity catalog.
+- getFoodById(id): finds a food item across the food category groups.
+- getFoodCategory(id): finds the category containing a food item.
+- foodIconById(id): gets a food icon or a category-based fallback icon.
+- activityIconById(id): gets an activity icon or a pin fallback.
+- expandItem(item): resolves a saved catalog reference into display fields.
+
+App views and derived reminders
+- renderCart(): shows reservations, selected items, subtotals, and estimate.
+- renderPretrip(): builds the timeline entries before the itinerary.
+- overviewItemName(item): gets the best display name for an itinerary item.
+- renderOverview(): summarizes the days and activities in the Overview tab.
+- renderItinerary(): builds the day cards and item rows.
+- renderFoodOptions(): builds the food catalog and its interactive controls.
+- renderAnimalScrapbook(): shows animal checks, notes, and images.
+- renderBucketList(): shows bucket-list entries and check state.
+- isBooked(name): checks whether a reservation name covers a given item.
+- deriveOpenItemsFromItinerary(): derives booking/payment reminders from
+  itinerary items that are not already booked.
+- renderOpenItems(): displays derived and configured open items.
+- renderActivities(): displays activities and their selection/tier controls.
+- renderOpenItems' itemHtml(item) helper: creates one open-item display card.
+
+Itinerary editor
+- isDesktopEdit(): checks whether the browser is above the edit breakpoint.
+- newUid(): generates an ID for a draft item.
+- seedDraft(): copies saved days and expands their catalog references.
+- ensureUids(days): assigns missing IDs to activities in the draft.
+- catalogNameToSourceId(): maps catalog names and aliases to stable source IDs.
+- linkCatalog(days): links saved itinerary rows to those catalog source IDs.
+- setDayTitle(dayNumber, value): changes a day's title and saves the draft.
+- findDraftItem(uid): finds a draft itinerary item by its ID.
+- formatTime(time): turns an HTML time input value into a 12-hour label.
+- setItemTime(uid, value): changes an item's time and saves without rebuilding
+  the focused time input.
+- customEditItemHtml(item, dayNumber): builds an editable custom-item row.
+- addCustomItem(dayNumber): inserts a blank custom item and focuses its name.
+- toggleIconPicker(uid): opens/closes the custom item's emoji picker.
+- setCustomIcon(uid, icon): changes the icon on a custom item.
+- setCustomField(uid, field, value): changes a custom item's text field.
+- saveCustomEdit(): saves a custom edit and refreshes its derived Overview text.
+- pruneEmptyCustomItems(): removes untouched blank custom items.
+- saveAllEdits(): cleans up and explicitly saves the itinerary and checklist.
+- commitDraftChange(): refreshes all views affected by an itinerary change.
+- placedSourceIds(): collects catalog IDs that are already placed on days.
+- placedDayOf(sourceId): returns the day number containing a catalog item.
+- toggleStagingGroup(key): toggles a staging group and redraws the drawer.
+- renderStaging(): displays unscheduled and removed items in the edit drawer.
+- renderStaging's itemHtml(item) helper: creates one draggable drawer row.
+- toggleStagingSelect(id): selects or deselects a staging row.
+- allowDrop(event): enables a drag-and-drop target.
+- dragStartStaging(event, id): records a drag starting in the staging drawer.
+- takeDragged(): removes and returns the current item from its source list.
+- dropOnDay(event, dayNumber): appends a dragged item to a day.
+- dragStartItem(event, uid): records a drag starting on an itinerary row.
+- dropOnItem(event, dayNumber, beforeUid): inserts an item before a day row.
+- removeItem(event, dayNumber, uid): removes an item and returns it to its
+  appropriate staging/unassigned list.
+- openStagingDrawer(): opens or closes the desktop editing drawer.
+- closeStagingDrawer(): closes the drawer and removes blank custom rows.
+- applyEditGating(): updates edit controls when the viewport crosses the
+  desktop breakpoint.
+
+Menus, images, and page event handlers
+- openLightbox(src): opens the image viewer with the selected source.
+- closeLightbox(event, force): closes the image viewer on backdrop/close action.
+- openMenuLightbox(restaurantId): builds and opens a structured restaurant menu.
+- openMenuLightbox's subnote(text, extraClass) helper: inserts a menu note.
+- closeMenuLightbox(event, force): closes the restaurant menu modal.
+- toggleFoodSummary(itemId, button): expands/collapses food research text.
+- Escape key handler: closes the image and menu overlays.
+- image click handler: opens clicked Preview, Gallery, or Animal images.
+- service-worker load handler: registers sw.js after the page finishes loading.
+
+
+Login page: login.html handlers
+-------------------------------
+- Existing-session promise handler: sends an already authenticated visitor
+  directly back to index.html.
+- Existing-session error handler: writes session restoration errors to console.
+- Login form submit handler: prevents ordinary form navigation, signs in with
+  email/password, shows errors, and returns to index.html after success.
+- Password visibility click handler: switches the password field between
+  masked and visible text and updates its accessible label.
+
+These handlers are anonymous functions (callbacks), not separately named
+functions. The same pattern is used for map/filter/forEach callbacks in
+index.html: the surrounding function comment explains the work they perform.
+
+
+How style.css participates
+-------------------------
+style.css contains presentation only; it does not fetch data or route pages.
+Its sections are organized around the page header, tabs, itinerary/activity
+cards, food, gallery/lightboxes, the staging editor, and the login page.
+The body classes role-editor, role-viewer, no-session, offline, and editing are
+set by JavaScript and control what the visitor sees or can do.
+
+
+Terms worth recognizing
+-----------------------
+- DOM: the browser's in-memory representation of the HTML page.
+- Session: Supabase's authentication state for the current visitor.
+- Promise/async/await: JavaScript's way to wait for network or other delayed
+  work without freezing the page.
+- Callback: a function passed to another function to run later or once per
+  event/item (for example, a click handler or an array map callback).
+- Render: build or update visible HTML using current app data.
+- Signed URL: a time-limited URL that grants access to a private Storage file.
+- Row Level Security (RLS): Supabase database/storage rules enforced by the
+  server. Hiding editor controls in CSS is not a substitute for RLS.
+- localStorage: browser storage used here for offline snapshots; it is not the
+  shared source of truth and should not contain secrets.
+
+
+Configuration reminder
+----------------------
+data/supabase-client.js must contain the correct Supabase project URL and
+anon/public key. The anon key is intended for browser use, but access must be
+restricted with Supabase RLS policies. Never put a service_role key in browser
+code. If the key in the actual file is literally "******", the Supabase client
+cannot authenticate correctly.
+
