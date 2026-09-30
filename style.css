@@ -10,6 +10,10 @@
   --warm-gray: #7a7068;
   --warm-white: #fefcf8;
   --gold: #c4a96b;
+  --sash-brown-dark: #563b2d;
+  --sash-brown: #79583e;
+  --sash-brown-light: #a27c59;
+  --sash-brown-pale: #ddc8aa;
 }
 
 * {
@@ -676,8 +680,84 @@ body.auth-pending {
 }
 
 /* BUCKET LIST */
+.bucket-list-layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  align-items: stretch;
+  gap: clamp(20px, 4vw, 48px);
+}
+.bucket-list-main {
+  align-self: start;
+  min-width: 0;
+}
 .bucket-list {
   list-style: none;
+}
+.bucket-list-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 760px;
+  margin: 22px auto 8px;
+}
+.bucket-emoji-trigger {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  border: 1px solid var(--sage-light);
+  border-radius: 10px;
+  background: var(--warm-white);
+  font-size: 23px;
+  cursor: pointer;
+}
+.bucket-list-add input {
+  min-width: 0;
+  height: 46px;
+  flex: 1;
+  padding: 0 14px;
+  border: 1px solid var(--ivory);
+  border-radius: 8px;
+  background: var(--warm-white);
+  color: var(--charcoal);
+  font:
+    13px "Montserrat",
+    sans-serif;
+}
+.bucket-list-add input:focus {
+  outline: 2px solid var(--sage);
+  outline-offset: 1px;
+}
+.bucket-add-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--sage-dark);
+  color: white;
+  font:
+    600 12px "Montserrat",
+    sans-serif;
+  cursor: pointer;
+}
+.bucket-add-button:hover {
+  background: var(--sage);
+}
+.bucket-add-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.bucket-list-status {
+  min-height: 18px;
+  margin: 4px auto 12px;
+  color: var(--warm-gray);
+  font:
+    italic 12px "Montserrat",
+    sans-serif;
+  text-align: center;
+}
+.bucket-list-status.error {
+  color: #a33b32;
 }
 .bucket-item {
   display: flex;
@@ -695,8 +775,55 @@ body.auth-pending {
   transition: all 0.2s;
   user-select: none;
 }
+.bucket-list-row {
+  cursor: default;
+}
 .bucket-item:hover {
   border-color: var(--sage-light);
+}
+.bucket-checkbox {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  accent-color: var(--sage-dark);
+  cursor: pointer;
+}
+.bucket-item-emoji {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 21px;
+  cursor: pointer;
+}
+.bucket-item-emoji:hover {
+  background: var(--ivory);
+}
+.bucket-item-text {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.bucket-delete-button {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--warm-gray);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.bucket-delete-button:hover {
+  background: #f8e8e5;
+  color: #a33b32;
 }
 .bucket-item.checked {
   background: #eaf3e8;
@@ -721,6 +848,308 @@ body.auth-pending {
   background: var(--sage);
   border-color: var(--sage);
   color: white;
+}
+.bucket-emoji-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(58, 53, 48, 0.58);
+  backdrop-filter: blur(4px);
+}
+.bucket-emoji-overlay[hidden] {
+  display: none;
+}
+.bucket-emoji-dialog {
+  width: min(100%, 430px);
+  max-height: min(82vh, 620px);
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid var(--ivory);
+  border-radius: 14px;
+  background: var(--warm-white);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22);
+}
+.bucket-emoji-dialog h2 {
+  margin: 0 0 16px;
+  color: var(--charcoal);
+  font:
+    600 27px "Cormorant Garamond",
+    serif;
+  text-align: center;
+}
+.bucket-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: 44px;
+  gap: 5px;
+  max-height: min(52vh, 390px);
+  overflow-y: auto;
+}
+.bucket-emoji-grid button {
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 24px;
+  cursor: pointer;
+}
+.bucket-emoji-grid button:hover,
+.bucket-emoji-grid button:focus-visible {
+  border-color: var(--sage-light);
+  background: #edf2e9;
+  outline: none;
+}
+.bucket-emoji-cancel {
+  display: block;
+  min-height: 40px;
+  margin: 16px 0 0 auto;
+  padding: 0 18px;
+  border: 1px solid var(--beige);
+  border-radius: 22px;
+  background: transparent;
+  color: var(--warm-gray);
+  font:
+    600 12px "Montserrat",
+    sans-serif;
+  cursor: pointer;
+}
+.bucket-emoji-grid button:disabled {
+  opacity: 0.22;
+  cursor: not-allowed;
+}
+.bucket-emoji-grid button:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+}
+.bucket-sash {
+  position: sticky;
+  top: 75px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  height: auto;
+  min-height: 0;
+  padding: 20px 14px 24px;
+  overflow: hidden;
+  border: 5px double var(--sash-brown-pale);
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 48%,
+      rgba(255, 246, 222, 0.12) 50%,
+      transparent 52%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      var(--sash-brown-dark) 0 14px,
+      var(--sash-brown) 14px 28px
+    );
+  box-shadow:
+    0 8px 20px rgba(73, 49, 31, 0.2),
+    inset 0 0 0 2px rgba(255, 246, 222, 0.16);
+  color: #fff8ec;
+  transition:
+    height 350ms ease,
+    box-shadow 350ms ease,
+    filter 350ms ease;
+  view-transition-name: bucket-sash;
+  cursor: pointer;
+}
+.bucket-sash:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+}
+::view-transition-group(bucket-sash) {
+  animation-duration: 350ms;
+  animation-timing-function: ease;
+}
+.bucket-sash:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+}
+.bucket-sash-title {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 16px;
+  color: #f3dfbd;
+  font:
+    600 18px "Cormorant Garamond",
+    serif;
+  text-align: center;
+}
+.bucket-sash-badges {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 46px;
+  justify-items: center;
+  align-items: center;
+  width: 100%;
+  padding: 0 12px;
+  gap: 8px;
+  overflow: visible;
+}
+.bucket-badge {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  aspect-ratio: 1;
+  border: 2px solid #e6d3b0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 28%,
+    #b58b61,
+    var(--sash-brown-dark) 72%
+  );
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 246, 222, 0.12),
+    0 2px 5px rgba(35, 23, 14, 0.35);
+  font-size: 23px;
+  cursor: help;
+}
+.bucket-badge.entering {
+  animation: bucket-badge-pop 320ms cubic-bezier(0.2, 0.8, 0.25, 1.2) both;
+}
+@keyframes bucket-badge-pop {
+  0% {
+    transform: scale(0.8);
+  }
+  65% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.bucket-sash-empty {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: 8px;
+  left: 8px;
+  padding: 0 4px;
+  transform: translateY(-50%);
+  color: #e1ceb3;
+  font:
+    italic 12px "Montserrat",
+    sans-serif;
+  line-height: 1.5;
+  text-align: center;
+}
+.bucket-sash-empty[hidden] {
+  display: none;
+}
+.bucket-sash-ribbon {
+  position: absolute;
+  z-index: 2;
+  top: 20px;
+  left: -14%;
+  width: 128%;
+  padding: 8px 12px;
+  transform: rotate(-8deg);
+  background: #a9433b;
+  box-shadow: 0 3px 8px rgba(35, 16, 13, 0.35);
+  color: white;
+  font:
+    700 12px "Montserrat",
+    sans-serif;
+  letter-spacing: 2px;
+  text-align: center;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 220ms ease,
+    top 220ms ease,
+    visibility 220ms ease;
+}
+.bucket-sash-ribbon.visible {
+  top: 42px;
+  visibility: visible;
+  opacity: 1;
+}
+.bucket-list-layout.reward-active::before {
+  position: fixed;
+  z-index: 1400;
+  inset: 0;
+  background: rgba(58, 53, 48, 0.2);
+  content: "";
+  pointer-events: none;
+}
+.bucket-list-layout.sash-centered .bucket-sash {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(360px, calc(100vw - 40px));
+  min-height: 0;
+  transform: translate(-50%, -50%) scale(1.04);
+  z-index: 1500;
+  max-height: none;
+  box-shadow:
+    0 24px 70px rgba(43, 28, 17, 0.46),
+    0 0 42px rgba(201, 163, 74, 0.28);
+  filter: saturate(1.15);
+}
+.bucket-list-layout.sash-centered .bucket-sash-badges {
+  pointer-events: none;
+}
+.bucket-list-layout.sash-centered .bucket-badge {
+  pointer-events: auto;
+}
+#bucket-confetti {
+  position: fixed;
+  z-index: 1401;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  visibility: hidden;
+  pointer-events: none;
+}
+#bucket-confetti.active {
+  visibility: visible;
+}
+@media (max-width: 700px) {
+  .bucket-list-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .bucket-list-main {
+    grid-row: 2;
+  }
+  .bucket-sash {
+    position: sticky;
+    top: 12px;
+    grid-row: 1;
+    z-index: 10;
+    align-self: start;
+  }
+  .bucket-sash-badges {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .bucket-list-add {
+    gap: 7px;
+  }
+  .bucket-add-button {
+    padding: 0 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bucket-sash,
+  .bucket-sash-ribbon {
+    transition: none;
+  }
+  .bucket-badge.entering {
+    animation: none;
+  }
 }
 
 /* ANIMAL SCRAPBOOK */
@@ -871,6 +1300,117 @@ body.auth-pending {
   flex-direction: column;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   position: relative;
+}
+.gallery-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(58, 53, 48, 0.58);
+  backdrop-filter: blur(4px);
+}
+.gallery-dialog-overlay[hidden] {
+  display: none;
+}
+.gallery-dialog {
+  width: min(100%, 440px);
+  padding: 28px;
+  border: 1px solid var(--ivory);
+  border-radius: 14px;
+  background: var(--warm-white);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22);
+}
+.gallery-dialog h2 {
+  margin: 0 0 8px;
+  color: var(--charcoal);
+  font-family: "Cormorant Garamond", serif;
+  font-size: 28px;
+  font-weight: 600;
+  text-align: center;
+}
+.gallery-dialog p {
+  margin: 0;
+  color: var(--warm-gray);
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+.gallery-dialog-context {
+  margin-top: 8px;
+  color: var(--sage-dark);
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.gallery-dialog-context[hidden] {
+  display: none;
+}
+.gallery-dialog-input-wrap {
+  display: grid;
+  gap: 7px;
+  margin-top: 20px;
+  color: var(--charcoal);
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+.gallery-dialog-input-wrap[hidden] {
+  display: none;
+}
+.gallery-dialog-input-wrap input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid var(--beige);
+  border-radius: 6px;
+  background: white;
+  color: var(--charcoal);
+  font:
+    14px "Montserrat",
+    sans-serif;
+}
+.gallery-dialog-input-wrap input:focus {
+  outline: 2px solid var(--sage);
+  outline-offset: 1px;
+}
+.gallery-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.gallery-dialog-actions button {
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: 22px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gallery-dialog-cancel {
+  border-color: var(--beige) !important;
+  background: transparent;
+  color: var(--warm-gray);
+}
+.gallery-dialog-confirm {
+  background: var(--sage-dark);
+  color: white;
+}
+.gallery-dialog-confirm:hover {
+  background: var(--sage);
+}
+.gallery-dialog-confirm.danger {
+  background: #a33b32;
+}
+.gallery-dialog-confirm.danger:hover {
+  background: #852e27;
 }
 .menu-title {
   text-align: center;
@@ -1024,6 +1564,38 @@ body.auth-pending {
 .gallery-edit-btn:hover {
   background: var(--sage);
   color: white;
+}
+.gallery-actions-menu {
+  position: absolute;
+  top: 42px;
+  right: 8px;
+  z-index: 3;
+  display: grid;
+  min-width: 132px;
+  padding: 4px;
+  background: white;
+  border: 1px solid var(--ivory);
+  border-radius: 6px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+}
+.gallery-actions-menu[hidden] {
+  display: none;
+}
+.gallery-actions-menu button {
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--charcoal);
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.gallery-actions-menu button:hover {
+  background: var(--ivory);
+}
+.gallery-actions-menu .gallery-delete-btn {
+  color: #a33b32;
 }
 .gallery-missing {
   aspect-ratio: 4/3;

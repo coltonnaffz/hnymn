@@ -112,9 +112,62 @@
       <!-- BUCKET LIST TAB -->
       <div id="tab-bucket" class="tab-panel">
         <div class="section-title">Honeymoon Bucket List</div>
-        <div class="section-sub">Tap to check off as you go</div>
-
-        <ul class="bucket-list" id="bucketList"></ul>
+        <div class="section-sub">Add a wish, then check it off as you go</div>
+        <div class="bucket-list-layout" id="bucket-list-layout">
+          <section class="bucket-list-main" aria-label="Honeymoon wishes">
+            <form class="bucket-list-add" onsubmit="addItem(event)">
+              <button
+                class="bucket-emoji-trigger"
+                id="bucket-emoji-trigger"
+                type="button"
+                aria-label="Choose an emoji"
+                aria-haspopup="dialog"
+                onclick="openBucketEmojiPicker()"
+              >
+                ✨
+              </button>
+              <input
+                id="bucket-list-input"
+                type="text"
+                maxlength="300"
+                placeholder="Add to your honeymoon list"
+                aria-label="New bucket list item"
+                required
+              />
+              <button class="bucket-add-button" type="submit">Add item</button>
+            </form>
+            <div
+              id="bucket-list-status"
+              class="bucket-list-status"
+              role="status"
+            ></div>
+            <ul class="bucket-list" id="bucketList"></ul>
+          </section>
+          <aside
+            class="bucket-sash"
+            id="bucket-sash"
+            role="button"
+            tabindex="0"
+            aria-pressed="false"
+            aria-label="Completed wish badges"
+            onclick="handleSashClick()"
+            onkeydown="handleSashKeydown(event)"
+          >
+            <div class="bucket-sash-title">Little victories</div>
+            <div class="bucket-sash-badges" id="bucket-sash-badges"></div>
+            <div class="bucket-sash-empty" id="bucket-sash-empty">
+              Your badges will gather here.
+            </div>
+            <div
+              class="bucket-sash-ribbon"
+              id="bucket-sash-ribbon"
+              aria-hidden="true"
+            >
+              COMPLETE
+            </div>
+          </aside>
+        </div>
+        <canvas id="bucket-confetti" aria-hidden="true"></canvas>
       </div>
 
       <!-- ANIMAL SCRAPBOOK TAB -->
@@ -222,6 +275,78 @@
       </div>
     </div>
 
+    <div
+      class="gallery-dialog-overlay"
+      id="gallery-dialog-overlay"
+      hidden
+      onclick="closeGalleryDialogFromBackdrop(event)"
+    >
+      <section
+        class="gallery-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="gallery-dialog-title"
+        aria-describedby="gallery-dialog-message"
+        tabindex="-1"
+        onclick="event.stopPropagation()"
+      >
+        <h2 id="gallery-dialog-title"></h2>
+        <p id="gallery-dialog-message"></p>
+        <div
+          class="gallery-dialog-context"
+          id="gallery-dialog-context"
+          hidden
+        ></div>
+        <label
+          class="gallery-dialog-input-wrap"
+          id="gallery-dialog-input-wrap"
+          hidden
+        >
+          <span id="gallery-dialog-input-label"></span>
+          <input id="gallery-dialog-input" type="text" maxlength="120" />
+        </label>
+        <div class="gallery-dialog-actions">
+          <button
+            type="button"
+            class="gallery-dialog-cancel"
+            id="gallery-dialog-cancel"
+            onclick="cancelGalleryDialog()"
+          ></button>
+          <button
+            type="button"
+            class="gallery-dialog-confirm"
+            id="gallery-dialog-confirm"
+            onclick="confirmGalleryDialog()"
+          ></button>
+        </div>
+      </section>
+    </div>
+
+    <div
+      class="bucket-emoji-overlay"
+      id="bucket-emoji-overlay"
+      hidden
+      onclick="closeBucketEmojiPickerFromBackdrop(event)"
+    >
+      <section
+        class="bucket-emoji-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bucket-emoji-title"
+        onclick="event.stopPropagation()"
+      >
+        <h2 id="bucket-emoji-title">Choose an emoji</h2>
+        <div class="bucket-emoji-grid" id="bucket-emoji-grid"></div>
+        <button
+          class="bucket-emoji-cancel"
+          type="button"
+          onclick="closeBucketEmojiPicker()"
+        >
+          Cancel
+        </button>
+      </section>
+    </div>
+
     <footer id="site-footer"></footer>
     <button id="signout-btn" class="signout-btn" type="button">Sign out</button>
 
@@ -240,7 +365,76 @@
       let reservationsData = [];
       let pretripData = [];
       let openItemsData = [];
-      let bucketlistData = [];
+      let bucketListItems = [];
+      let selectedBucketEmoji = "✨";
+      let bucketEmojiTargetId = null;
+      let completionState = false;
+      let wasPreviouslyComplete = false;
+      let rewardState = false;
+      let sashState = "normal";
+      let rewardResetTimer = 0;
+      let renderedBucketBadgeIds = new Set();
+      let confettiFrame = 0;
+      let confettiTimeout = 0;
+      let confettiParticles = [];
+      const BUCKET_EMOJIS = [
+        "🏔️",
+        "🌄",
+        "🌅",
+        "🌲",
+        "🌳",
+        "🌿",
+        "🍃",
+        "🌸",
+        "🌼",
+        "🌻",
+        "🌺",
+        "🌷",
+        "🦌",
+        "🫎",
+        "🐻",
+        "🦊",
+        "🐺",
+        "🦅",
+        "🦉",
+        "🐿️",
+        "🐇",
+        "🦋",
+        "🐝",
+        "🐟",
+        "🦆",
+        "🦢",
+        "🦦",
+        "🐎",
+        "🚣",
+        "🛶",
+        "🥾",
+        "🎒",
+        "⛺",
+        "🧭",
+        "📸",
+        "🔭",
+        "🌌",
+        "⭐",
+        "✨",
+        "☀️",
+        "🌈",
+        "💧",
+        "🏞️",
+        "🌊",
+        "🪵",
+        "🔥",
+        "🧺",
+        "🍓",
+        "🫐",
+        "🍯",
+        "☕",
+        "🥞",
+        "🧇",
+        "🍽️",
+        "❤️",
+        "💍",
+      ];
       let animalScrapbookData = [];
       let animalImages = {};
       const signoutBtn = document.getElementById("signout-btn");
@@ -264,6 +458,7 @@
         applyRole(session);
         await loadCloudContent(); // pull latest content from Supabase
         await loadChecklistState(); // pull bucket-list + animal-scrapbook checks
+        await fetchItems();
         loadMediaUrls(); // build public preview + animal image URLs
         reseedWorkingState(); // rebuild editor state from the cloud content
         renderAll(); // render every tab from the cloud content
@@ -329,7 +524,6 @@
         if (byKey.reservations) reservationsData = byKey.reservations;
         if (byKey.pretrip) pretripData = byKey.pretrip;
         if (byKey.open_items) openItemsData = byKey.open_items;
-        if (byKey.bucket_list) bucketlistData = byKey.bucket_list;
         if (byKey.animals) animalScrapbookData = byKey.animals;
         if (byKey.animal_images) animalImages = byKey.animal_images;
         if (byKey.site) siteData = byKey.site;
@@ -402,7 +596,7 @@
         renderCart();
         renderOpenItems();
         renderAnimalScrapbook();
-        renderBucketList();
+        renderList();
         applyEditGating();
       }
 
@@ -553,6 +747,112 @@
           } catch (e2) {} // queued for reconnect
         }
       }
+      // Fetch structured honeymoon bucket-list items from Supabase.
+      function nextAvailableBucketEmoji(usedEmojis, preferredEmoji) {
+        if (preferredEmoji && !usedEmojis.has(preferredEmoji)) {
+          return preferredEmoji;
+        }
+        return BUCKET_EMOJIS.find((emoji) => !usedEmojis.has(emoji)) || null;
+      }
+      async function fetchItems() {
+        const status = document.getElementById("bucket-list-status");
+        if (status) status.textContent = "Loading bucket list…";
+        try {
+          const { data, error } = await sb
+            .from("content")
+            .select("value")
+            .eq("key", "bucket_list")
+            .maybeSingle();
+          if (error) throw error;
+          const savedItems =
+            data && Array.isArray(data.value) ? data.value : [];
+          const completedTexts = checklistState.bucket || [];
+          const usedEmojis = new Set();
+          let needsMigration = false;
+          bucketListItems = savedItems
+            .map((item) => {
+              const legacyText = typeof item === "string";
+              const text = legacyText ? item : item && item.text;
+              if (typeof text !== "string" || !text.trim()) {
+                needsMigration = true;
+                return null;
+              }
+              const id = !legacyText && item.id ? item.id : newUid();
+              const completed =
+                !legacyText && typeof item.completed === "boolean"
+                  ? item.completed
+                  : completedTexts.includes(text);
+              const preferredEmoji =
+                !legacyText && typeof item.emoji === "string"
+                  ? item.emoji
+                  : null;
+              const emoji = nextAvailableBucketEmoji(
+                usedEmojis,
+                preferredEmoji,
+              );
+              if (!emoji) {
+                needsMigration = true;
+                return null;
+              }
+              usedEmojis.add(emoji);
+              if (
+                legacyText ||
+                !item.id ||
+                item.emoji !== emoji ||
+                typeof item.completed !== "boolean"
+              ) {
+                needsMigration = true;
+              }
+              return { id, text, emoji, completed };
+            })
+            .filter(Boolean);
+          if (bucketListItems.length !== savedItems.length) {
+            needsMigration = true;
+          }
+          if (needsMigration) {
+            try {
+              await saveBucketListItems(bucketListItems);
+            } catch (migrationError) {
+              console.warn(
+                "The bucket list loaded, but its legacy entries could not be migrated:",
+                migrationError,
+              );
+            }
+          }
+          if (status) status.classList.remove("error");
+          renderList();
+          checkCompletionState();
+        } catch (error) {
+          console.error("Unable to load bucket list:", error);
+          bucketListItems = [];
+          if (status) {
+            status.textContent =
+              "Could not load the bucket list. Check the connection and database setup.";
+            status.classList.add("error");
+          }
+          renderList();
+          checkCompletionState();
+        }
+      }
+      // Persist the complete structured list in the existing content row.
+      async function saveBucketListItems(items) {
+        const usedEmojis = new Set();
+        for (const item of items) {
+          if (!item.emoji || usedEmojis.has(item.emoji)) {
+            throw new Error("Each bucket-list item must use a unique emoji.");
+          }
+          usedEmojis.add(item.emoji);
+        }
+        const { error } = await sb.from("content").upsert(
+          {
+            key: "bucket_list",
+            value: items,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "key" },
+        );
+        if (error) throw error;
+      }
       // Stage 8: on reconnect, push any queued (offline) checklist change (whole-state, last-write-wins).
       // Retry a checklist write that was queued while offline.
       async function flushChecklistQueue() {
@@ -614,11 +914,20 @@
       async function renderGallery() {
         const grid = document.getElementById("gallery-grid-render");
         if (!grid) return;
+        let currentUserId = null;
+        try {
+          const {
+            data: { user },
+          } = await sb.auth.getUser();
+          currentUserId = user ? user.id : null;
+        } catch (error) {
+          console.warn("Unable to identify the current gallery user:", error);
+        }
         let rows;
         try {
           const { data, error } = await sb
             .from("gallery")
-            .select("id,storage_path,caption,created_at")
+            .select("id,storage_path,caption,created_at,uploaded_by")
             .order("created_at", { ascending: false });
           if (error) throw error;
           rows = data || [];
@@ -629,8 +938,7 @@
           return;
         }
         if (!rows.length) {
-          grid.innerHTML =
-            '<div class="gallery-empty">No photos yet — tap "📷 Upload Photo" to add one.</div>';
+          grid.replaceChildren();
           return;
         }
         const paths = rows.map((r) => r.storage_path);
@@ -646,17 +954,29 @@
         } catch (error) {
           console.error("Unable to create signed gallery image URLs:", error);
         }
+        rows = rows.filter((r) => urlByPath[r.storage_path]);
+        if (!rows.length) {
+          grid.replaceChildren();
+          return;
+        }
         grid.innerHTML = rows
           .map((r) => {
             const url = urlByPath[r.storage_path];
             const cap = r.caption || "";
             const capA = escAttr(cap);
-            const media = url
-              ? `<img src="${url}" alt="${capA || "Trip photo"}" loading="lazy">`
-              : `<div class="gallery-missing">⚠ Image unavailable<span>(file moved or deleted)</span></div>`;
+            const media = `<img src="${url}" alt="${capA || "Trip photo"}" loading="lazy">`;
+            const actions =
+              r.uploaded_by === currentUserId
+                ? `
+          <button class="gallery-edit-btn" type="button" title="Photo actions" aria-label="Photo actions" aria-expanded="false" onclick="event.stopPropagation(); toggleGalleryActions(this)">✎</button>
+          <div class="gallery-actions-menu" hidden onclick="event.stopPropagation()">
+            <button type="button" onclick="editGalleryCaptionFromMenu(this)">Edit caption</button>
+            <button type="button" class="gallery-delete-btn" onclick="deleteGalleryItem(this.closest('.gallery-item'))">Delete photo</button>
+          </div>`
+                : "";
             return `<div class="gallery-item" data-id="${r.id}" data-caption="${capA}">
           ${media}
-          <button class="gallery-edit-btn" title="Edit caption" onclick="event.stopPropagation(); editGalleryCaption('${r.id}', this)">✎</button>
+          ${actions}
           ${cap ? `<div class="gallery-caption">${escHtml(cap)}</div>` : ""}
         </div>`;
           })
@@ -669,9 +989,15 @@
           alert("You're offline — connect to the internet to upload photos.");
           return;
         } // Stage 8
+        const selectedFiles = Array.from(files);
         const {
           data: { user },
+          error: authError,
         } = await sb.auth.getUser();
+        if (authError) {
+          alert("Unable to verify your account. Please try again.");
+          return;
+        }
         if (!user) {
           alert("Please sign in to upload.");
           return;
@@ -681,38 +1007,189 @@
           btn.disabled = true;
           btn.textContent = "Uploading…";
         }
-        for (const file of files) {
-          try {
-            const caption =
-              prompt('Caption for "' + file.name + '" (optional):', "") || null;
-            const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-            const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-            const { error: upErr } = await sb.storage
-              .from("gallery")
-              .upload(path, file);
-            if (upErr) {
-              alert("Upload failed: " + upErr.message);
-              continue;
-            }
-            const { error: insErr } = await sb.from("gallery").insert({
-              storage_path: path,
-              uploaded_by: user.id,
-              caption: caption,
+        const captions = [];
+        try {
+          for (let index = 0; index < selectedFiles.length; index++) {
+            const result = await showGalleryDialog({
+              title: "Add photo",
+              message: "Would you like to title the image?",
+              context: selectedFiles[index].name,
+              inputLabel: "Image title (optional)",
+              confirmText:
+                index === selectedFiles.length - 1
+                  ? `Upload ${selectedFiles.length === 1 ? "photo" : "photos"}`
+                  : "Next photo",
+              cancelText: "Cancel upload",
             });
-            if (insErr) {
-              alert("File uploaded but saving it failed: " + insErr.message);
-            }
-          } catch (e) {
-            alert("Upload error: " + e.message);
+            if (!result.confirmed) return;
+            captions.push(result.value || null);
           }
+          for (let index = 0; index < selectedFiles.length; index++) {
+            const file = selectedFiles[index];
+            try {
+              const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+              const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+              const { error: upErr } = await sb.storage
+                .from("gallery")
+                .upload(path, file);
+              if (upErr) {
+                alert("Upload failed: " + upErr.message);
+                continue;
+              }
+              const { error: insErr } = await sb.from("gallery").insert({
+                storage_path: path,
+                uploaded_by: user.id,
+                caption: captions[index],
+              });
+              if (insErr) {
+                alert("File uploaded but saving it failed: " + insErr.message);
+              }
+            } catch (e) {
+              alert("Upload error: " + e.message);
+            }
+          }
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = "📷 Upload Photo";
+          }
+          const input = document.getElementById("gallery-file-input");
+          if (input) input.value = "";
         }
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "📷 Upload Photo";
-        }
-        const input = document.getElementById("gallery-file-input");
-        if (input) input.value = ""; // allow re-selecting the same file
         await renderGallery();
+      }
+      let galleryDialogResolve = null;
+      // Show the themed gallery dialog and resolve when the user chooses an action.
+      function showGalleryDialog(options) {
+        const overlay = document.getElementById("gallery-dialog-overlay");
+        const inputWrap = document.getElementById("gallery-dialog-input-wrap");
+        const input = document.getElementById("gallery-dialog-input");
+        const confirmButton = document.getElementById("gallery-dialog-confirm");
+        document.getElementById("gallery-dialog-title").textContent =
+          options.title;
+        document.getElementById("gallery-dialog-message").textContent =
+          options.message;
+        const context = document.getElementById("gallery-dialog-context");
+        context.textContent = options.context || "";
+        context.hidden = !options.context;
+        inputWrap.hidden = !options.inputLabel;
+        document.getElementById("gallery-dialog-input-label").textContent =
+          options.inputLabel || "";
+        input.value = options.inputValue || "";
+        document.getElementById("gallery-dialog-cancel").textContent =
+          options.cancelText || "Cancel";
+        confirmButton.textContent = options.confirmText || "Confirm";
+        confirmButton.classList.toggle("danger", !!options.danger);
+        overlay.hidden = false;
+        return new Promise((resolve) => {
+          galleryDialogResolve = resolve;
+          (options.inputLabel ? input : confirmButton).focus();
+        });
+      }
+      // Close the gallery dialog and return the selected value to its caller.
+      function closeGalleryDialog(result) {
+        const overlay = document.getElementById("gallery-dialog-overlay");
+        if (overlay.hidden) return;
+        overlay.hidden = true;
+        if (galleryDialogResolve) {
+          const resolve = galleryDialogResolve;
+          galleryDialogResolve = null;
+          resolve(result);
+        }
+      }
+      function confirmGalleryDialog() {
+        closeGalleryDialog({
+          confirmed: true,
+          value: document.getElementById("gallery-dialog-input").value.trim(),
+        });
+      }
+      function cancelGalleryDialog() {
+        closeGalleryDialog({ confirmed: false, value: "" });
+      }
+      function closeGalleryDialogFromBackdrop(event) {
+        if (
+          event.target === document.getElementById("gallery-dialog-overlay")
+        ) {
+          cancelGalleryDialog();
+        }
+      }
+      // Open one gallery item's action menu and close any others.
+      function toggleGalleryActions(button) {
+        const menu = button.nextElementSibling;
+        const shouldOpen = menu.hidden;
+        document
+          .querySelectorAll(".gallery-actions-menu")
+          .forEach((openMenu) => {
+            openMenu.hidden = true;
+            openMenu.previousElementSibling.setAttribute(
+              "aria-expanded",
+              "false",
+            );
+          });
+        menu.hidden = !shouldOpen;
+        button.setAttribute("aria-expanded", String(shouldOpen));
+      }
+      // Close the action menu before opening the existing caption editor.
+      function editGalleryCaptionFromMenu(button) {
+        const item = button.closest(".gallery-item");
+        const actionsButton = item.querySelector(".gallery-edit-btn");
+        item.querySelector(".gallery-actions-menu").hidden = true;
+        actionsButton.setAttribute("aria-expanded", "false");
+        editGalleryCaption(item.dataset.id, actionsButton);
+      }
+      // Delete a gallery image from private Storage and remove its metadata row.
+      async function deleteGalleryItem(item) {
+        if (!item || !navigator.onLine) {
+          if (!navigator.onLine)
+            alert("You're offline — connect to the internet to delete photos.");
+          return;
+        }
+        const id = item.dataset.id;
+        if (!id) return;
+        const confirmation = await showGalleryDialog({
+          title: "Delete photo?",
+          message: "This photo will be permanently removed from your gallery.",
+          confirmText: "Confirm",
+          cancelText: "Cancel",
+          danger: true,
+        });
+        if (!confirmation.confirmed) return;
+        try {
+          const {
+            data: { user },
+            error: authError,
+          } = await sb.auth.getUser();
+          if (authError) throw authError;
+          if (!user) throw new Error("Please sign in to delete photos.");
+          const { data: photo, error: lookupError } = await sb
+            .from("gallery")
+            .select("id,storage_path")
+            .eq("id", id)
+            .eq("uploaded_by", user.id)
+            .maybeSingle();
+          if (lookupError) throw lookupError;
+          if (!photo)
+            throw new Error("You can only delete photos you uploaded.");
+          const { error: storageError } = await sb.storage
+            .from("gallery")
+            .remove([photo.storage_path]);
+          if (storageError) throw storageError;
+          const { data: deletedPhoto, error: rowError } = await sb
+            .from("gallery")
+            .delete()
+            .eq("id", id)
+            .eq("uploaded_by", user.id)
+            .select("id")
+            .maybeSingle();
+          if (rowError) throw rowError;
+          if (!deletedPhoto)
+            throw new Error("The gallery record was not deleted.");
+          await renderGallery();
+        } catch (error) {
+          console.error("Unable to delete gallery photo:", error);
+          alert("Could not delete photo: " + error.message);
+          await renderGallery();
+        }
       }
       // Prompt for and persist a photo caption, then refresh the gallery.
       async function editGalleryCaption(id, btn) {
@@ -722,12 +1199,19 @@
         } // Stage 8
         const item = btn.closest(".gallery-item");
         const cur = (item && item.dataset.caption) || "";
-        const val = prompt("Caption for this photo:", cur);
-        if (val === null) return; // cancelled
+        const result = await showGalleryDialog({
+          title: "Edit photo title",
+          message: "Update the title shown with this image.",
+          inputLabel: "Image title",
+          inputValue: cur,
+          confirmText: "Save title",
+          cancelText: "Cancel",
+        });
+        if (!result.confirmed) return;
         try {
           const { error } = await sb
             .from("gallery")
-            .update({ caption: val })
+            .update({ caption: result.value || null })
             .eq("id", id);
           if (error) {
             alert("Could not update caption: " + error.message);
@@ -1295,22 +1779,380 @@
       }
       renderAnimalScrapbook();
 
-      // Render the honeymoon bucket-list items and their checked state.
-      function renderBucketList() {
-        const list = document.getElementById("bucketList");
-        const checked = checklistState.bucket || [];
-        list.innerHTML = bucketlistData
-          .map(
-            (text) => `
-        <li class="bucket-item${checked.includes(text) ? " checked" : ""}" data-kind="bucket" data-key="${escAttr(text)}" onclick="toggleBucket(this)">
-          <div class="bucket-check">&#10003;</div>
-          ${text}
-        </li>
-      `,
-          )
-          .join("");
+      // Render Supabase bucket-list records and their actions.
+      function renderList() {
+        const updateList = () => {
+          const list = document.getElementById("bucketList");
+          const status = document.getElementById("bucket-list-status");
+          const addButton = document.querySelector(".bucket-add-button");
+          if (!list) return;
+          if (addButton) {
+            addButton.disabled = !nextAvailableBucketEmoji(
+              new Set(bucketListItems.map((item) => item.emoji)),
+            );
+          }
+          if (status && !status.classList.contains("error")) {
+            status.textContent = bucketListItems.length
+              ? `${bucketListItems.filter((item) => item.completed).length} of ${bucketListItems.length} complete`
+              : "Your list is waiting for its first adventure.";
+          }
+          list.innerHTML = bucketListItems
+            .map((item) => {
+              const id = escAttr(item.id);
+              const text = escHtml(item.text);
+              const emoji = escHtml(item.emoji || "✨");
+              return `
+        <li class="bucket-item bucket-list-row${item.completed ? " checked" : ""}">
+          <input class="bucket-checkbox" type="checkbox" aria-label="Mark ${escAttr(item.text)} complete" ${item.completed ? "checked" : ""} onchange="toggleItem('${id}', this.checked)">
+          <button class="bucket-item-emoji" type="button" aria-label="Change emoji for ${escAttr(item.text)}" title="Change emoji" onclick="openBucketEmojiPicker('${id}')">${emoji}</button>
+          <span class="bucket-item-text">${text}</span>
+          <button class="bucket-delete-button" type="button" aria-label="Delete ${escAttr(item.text)}" title="Delete item" onclick="deleteItem('${id}')">×</button>
+        </li>`;
+            })
+            .join("");
+          renderBadges();
+        };
+        if (
+          typeof document.startViewTransition === "function" &&
+          !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+          try {
+            document.startViewTransition(updateList);
+            return;
+          } catch (error) {
+            console.warn("Unable to animate the bucket list update:", error);
+          }
+        }
+        updateList();
       }
-      renderBucketList();
+      // Save a new shared bucket-list item, then refresh the displayed list.
+      async function addItem(event) {
+        event.preventDefault();
+        const input = document.getElementById("bucket-list-input");
+        const status = document.getElementById("bucket-list-status");
+        const text = input.value.trim();
+        if (!text) return;
+        if (
+          bucketListItems.some((item) => item.emoji === selectedBucketEmoji)
+        ) {
+          status.textContent = "Choose an emoji that is not already in use.";
+          status.classList.add("error");
+          return;
+        }
+        const button = event.currentTarget.querySelector(
+          'button[type="submit"]',
+        );
+        button.disabled = true;
+        try {
+          const item = {
+            id: newUid(),
+            text,
+            emoji: selectedBucketEmoji,
+            completed: false,
+          };
+          const updatedItems = [...bucketListItems, item];
+          await saveBucketListItems(updatedItems);
+          bucketListItems = updatedItems;
+          invalidateCompletionForMutation();
+          input.value = "";
+          selectedBucketEmoji =
+            nextAvailableBucketEmoji(
+              new Set(updatedItems.map((entry) => entry.emoji)),
+            ) || "✨";
+          document.getElementById("bucket-emoji-trigger").textContent =
+            selectedBucketEmoji;
+          status.classList.remove("error");
+          renderList();
+          checkCompletionState();
+          input.focus();
+        } catch (error) {
+          console.error("Unable to add bucket-list item:", error);
+          status.textContent = "Could not add item: " + error.message;
+          status.classList.add("error");
+        } finally {
+          button.disabled = false;
+        }
+      }
+      // Persist a completion toggle before reflecting it in the list.
+      async function toggleItem(id, completed) {
+        const status = document.getElementById("bucket-list-status");
+        try {
+          const updatedItems = bucketListItems.map((item) =>
+            item.id === id ? { ...item, completed } : item,
+          );
+          await saveBucketListItems(updatedItems);
+          bucketListItems = updatedItems;
+          if (!completed) invalidateCompletionForMutation();
+          status.classList.remove("error");
+          renderList();
+          checkCompletionState({ allowReward: completed });
+        } catch (error) {
+          console.error("Unable to update bucket-list item:", error);
+          status.textContent = "Could not update item: " + error.message;
+          status.classList.add("error");
+          renderList();
+          checkCompletionState();
+        }
+      }
+      // Delete a bucket-list record from Supabase and remove it from the view.
+      async function deleteItem(id) {
+        const status = document.getElementById("bucket-list-status");
+        try {
+          const updatedItems = bucketListItems.filter((item) => item.id !== id);
+          if (updatedItems.length === bucketListItems.length) return;
+          await saveBucketListItems(updatedItems);
+          bucketListItems = updatedItems;
+          invalidateCompletionForMutation();
+          status.classList.remove("error");
+          renderList();
+          checkCompletionState();
+        } catch (error) {
+          console.error("Unable to delete bucket-list item:", error);
+          status.textContent = "Could not delete item: " + error.message;
+          status.classList.add("error");
+        }
+      }
+      // Render completed-item badges from the current bucket-list state.
+      function renderBadges() {
+        const badges = document.getElementById("bucket-sash-badges");
+        const empty = document.getElementById("bucket-sash-empty");
+        if (!badges || !empty) return;
+        const completedItems = bucketListItems.filter((item) => item.completed);
+        const currentIds = new Set(completedItems.map((item) => item.id));
+        badges.innerHTML = completedItems
+          .map((item) => {
+            const isNew = !renderedBucketBadgeIds.has(item.id);
+            return `<span class="bucket-badge${isNew ? " entering" : ""}" title="${escAttr(item.text)}" aria-label="${escAttr(item.text)}">${escHtml(item.emoji)}</span>`;
+          })
+          .join("");
+        empty.hidden = completedItems.length > 0;
+        renderedBucketBadgeIds = currentIds;
+      }
+      // Render sash position from manual focus and temporary reward state.
+      function renderSashState() {
+        const layout = document.getElementById("bucket-list-layout");
+        const sash = document.getElementById("bucket-sash");
+        if (!layout || !sash) return;
+        const wasCentered = layout.classList.contains("sash-centered");
+        const isCentered = rewardState || sashState === "focused";
+        const before = sash.getBoundingClientRect();
+        layout.classList.toggle("sash-centered", isCentered);
+        layout.classList.toggle("reward-active", rewardState);
+        layout.dataset.sashState = sashState;
+        sash.setAttribute("aria-pressed", String(isCentered));
+        if (wasCentered === isCentered) return;
+        const after = sash.getBoundingClientRect();
+        if (!before.width || !after.width) return;
+        const dx = before.left - after.left;
+        const dy = before.top - after.top;
+        const scaleX = before.width / after.width;
+        const scaleY = before.height / after.height;
+        const finalTransform = getComputedStyle(sash).transform;
+        const endTransform =
+          finalTransform === "none" ? "none" : finalTransform;
+        if (
+          typeof sash.animate === "function" &&
+          !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+          sash.animate(
+            [
+              {
+                transform: `translate(${dx}px, ${dy}px) scale(${scaleX}, ${scaleY}) ${endTransform === "none" ? "" : endTransform}`,
+              },
+              { transform: endTransform },
+            ],
+            { duration: 460, easing: "cubic-bezier(0.2, 0.75, 0.25, 1)" },
+          );
+        }
+      }
+      // Render the completion ribbon exclusively from completionState.
+      function renderCompletionUI() {
+        const layout = document.getElementById("bucket-list-layout");
+        const ribbon = document.getElementById("bucket-sash-ribbon");
+        if (!layout || !ribbon) return;
+        ribbon.classList.toggle("visible", completionState);
+        ribbon.setAttribute("aria-hidden", String(!completionState));
+      }
+      // Reset transient celebration state without changing completionState.
+      function resetRewardState() {
+        rewardResetTimer = 0;
+        rewardState = false;
+        stopConfetti();
+        renderSashState();
+        renderList();
+      }
+      // Clear completion/reward state before recomputing after an invalidating mutation.
+      function invalidateCompletionForMutation() {
+        completionState = false;
+        rewardState = false;
+        if (rewardResetTimer) clearTimeout(rewardResetTimer);
+        rewardResetTimer = 0;
+        stopConfetti();
+        renderCompletionUI();
+        renderSashState();
+      }
+      // Recompute completion and enter a one-shot three-second reward on false-to-true.
+      function checkCompletionState({ allowReward = false } = {}) {
+        completionState =
+          bucketListItems.length > 0 &&
+          bucketListItems.every((item) => item.completed);
+        if (!completionState) {
+          rewardState = false;
+          if (rewardResetTimer) clearTimeout(rewardResetTimer);
+          rewardResetTimer = 0;
+          stopConfetti();
+        } else if (!wasPreviouslyComplete && allowReward) {
+          rewardState = true;
+          if (rewardResetTimer) clearTimeout(rewardResetTimer);
+          rewardResetTimer = window.setTimeout(resetRewardState, 3000);
+          triggerConfetti();
+        }
+        wasPreviouslyComplete = completionState;
+        renderCompletionUI();
+        renderSashState();
+      }
+      // Toggle manual sash focus without changing completion or reward state.
+      function handleSashClick() {
+        sashState = sashState === "focused" ? "normal" : "focused";
+        renderSashState();
+      }
+      function handleSashKeydown(event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handleSashClick();
+        }
+      }
+      // Animate a ten-second gold-and-silver confetti burst over the completed list.
+      function triggerConfetti() {
+        stopConfetti();
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          return;
+        }
+        const canvas = document.getElementById("bucket-confetti");
+        const context = canvas && canvas.getContext("2d");
+        if (!canvas || !context) return;
+        const pixelRatio = window.devicePixelRatio || 1;
+        canvas.width = Math.round(window.innerWidth * pixelRatio);
+        canvas.height = Math.round(window.innerHeight * pixelRatio);
+        canvas.style.width = `${window.innerWidth}px`;
+        canvas.style.height = `${window.innerHeight}px`;
+        canvas.classList.add("active");
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        const colors = ["#c9a34a", "#e4c978", "#c7cbd1", "#eef0f2"];
+        confettiParticles = Array.from({ length: 110 }, () => ({
+          x: Math.random() * window.innerWidth,
+          y: -20 - Math.random() * window.innerHeight * 0.35,
+          vx: (Math.random() - 0.5) * 3,
+          vy: 2 + Math.random() * 4,
+          size: 4 + Math.random() * 5,
+          angle: Math.random() * Math.PI,
+          spin: (Math.random() - 0.5) * 0.16,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        }));
+        const startedAt = performance.now();
+        const drawFrame = (now) => {
+          context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+          confettiParticles.forEach((particle) => {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.angle += particle.spin;
+            particle.vy += 0.025;
+            context.save();
+            context.translate(particle.x, particle.y);
+            context.rotate(particle.angle);
+            context.fillStyle = particle.color;
+            context.fillRect(
+              -particle.size / 2,
+              -particle.size / 3,
+              particle.size,
+              particle.size * 0.66,
+            );
+            context.restore();
+          });
+          if (now - startedAt < 10000) {
+            confettiFrame = requestAnimationFrame(drawFrame);
+          } else {
+            stopConfetti();
+          }
+        };
+        confettiFrame = requestAnimationFrame(drawFrame);
+        confettiTimeout = window.setTimeout(stopConfetti, 10000);
+      }
+      function stopConfetti() {
+        if (confettiFrame) cancelAnimationFrame(confettiFrame);
+        if (confettiTimeout) clearTimeout(confettiTimeout);
+        confettiFrame = 0;
+        confettiTimeout = 0;
+        confettiParticles = [];
+        const canvas = document.getElementById("bucket-confetti");
+        const context = canvas && canvas.getContext("2d");
+        if (context) {
+          context.save();
+          context.setTransform(1, 0, 0, 1, 0, 0);
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.restore();
+        }
+        if (canvas) canvas.classList.remove("active");
+      }
+      // Open the seven-column picker, disabling emojis used by other items.
+      function openBucketEmojiPicker(itemId = null) {
+        bucketEmojiTargetId = itemId;
+        const grid = document.getElementById("bucket-emoji-grid");
+        const usedEmojis = new Set(
+          bucketListItems
+            .filter((item) => item.id !== itemId)
+            .map((item) => item.emoji),
+        );
+        grid.innerHTML = BUCKET_EMOJIS.map((emoji) => {
+          const disabled = usedEmojis.has(emoji);
+          return `<button type="button" aria-label="${disabled ? "Already used" : "Choose"} ${emoji}" title="${disabled ? "Already in use" : "Choose emoji"}" ${disabled ? "disabled" : ""} onclick="handleEmojiSelection('${emoji}')">${emoji}</button>`;
+        }).join("");
+        document.getElementById("bucket-emoji-overlay").hidden = false;
+        const firstAvailable = grid.querySelector("button:not(:disabled)");
+        if (firstAvailable) firstAvailable.focus();
+        else document.querySelector(".bucket-emoji-cancel").focus();
+      }
+      // Assign a unique emoji to the add form or persist a change to an existing item.
+      async function handleEmojiSelection(emoji) {
+        const status = document.getElementById("bucket-list-status");
+        const targetId = bucketEmojiTargetId;
+        const usedEmojis = new Set(
+          bucketListItems
+            .filter((item) => item.id !== targetId)
+            .map((item) => item.emoji),
+        );
+        if (usedEmojis.has(emoji)) return;
+        if (targetId === null) {
+          selectedBucketEmoji = emoji;
+          document.getElementById("bucket-emoji-trigger").textContent = emoji;
+          closeBucketEmojiPicker();
+          document.getElementById("bucket-list-input").focus();
+          return;
+        }
+        try {
+          const updatedItems = bucketListItems.map((item) =>
+            item.id === targetId ? { ...item, emoji } : item,
+          );
+          await saveBucketListItems(updatedItems);
+          bucketListItems = updatedItems;
+          status.classList.remove("error");
+          closeBucketEmojiPicker();
+          renderList();
+        } catch (error) {
+          console.error("Unable to change bucket-list emoji:", error);
+          status.textContent = "Could not change emoji: " + error.message;
+          status.classList.add("error");
+        }
+      }
+      function closeBucketEmojiPicker() {
+        document.getElementById("bucket-emoji-overlay").hidden = true;
+        bucketEmojiTargetId = null;
+      }
+      function closeBucketEmojiPickerFromBackdrop(event) {
+        if (event.target === document.getElementById("bucket-emoji-overlay")) {
+          closeBucketEmojiPicker();
+        }
+      }
 
       // Reservations are the "already booked" set. Matched fuzzily by name so a catalog name like
       // "Jackson Hole White Water Rafting" still matches the reservation "White Water Rafting".
@@ -2132,6 +2974,7 @@
         if (e.key === "Escape") {
           document.getElementById("lightbox").classList.remove("active");
           closeMenuLightbox(null, true);
+          closeBucketEmojiPicker();
         }
       });
       // Open the image viewer when a supported tab's image is clicked.

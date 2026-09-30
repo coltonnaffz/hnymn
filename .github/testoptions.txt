@@ -1,0 +1,47 @@
+/*
+COPILOT TEST RUN:
+Apply the project testing rules from .github/copilot-instructions.md
+
+Focus this test ONLY on this function.
+
+Do:
+1. Analyze function purpose
+2. Identify edge cases
+3. Simulate execution step-by-step
+4. Suggest bugs or risks
+5. Refactor if needed
+6. Append results to testing.txt
+*/
+
+/*
+COPILOT FULL FILE TEST RUN:
+
+Run the Testing & Self-Review System on EVERY function in this file.
+
+For each function:
+- Analyze
+- Generate test cases
+- Simulate execution
+- Identify bugs
+- Refactor if needed
+- Log results to testing.txt
+
+Follow .github/copilot-instructions.md strictly.
+*/
+
+Copilot Next Level Options
+
+Option A — Real Test Runner (Jest-style)
+- Add automated tests with pass/fail results
+- Validate functions with real assertions
+- Best for catching actual runtime bugs
+
+Option B — Debug Mode Button
+- Add a UI button inside your app
+- Runs self-check functions on demand
+- Shows console + UI logs of issues
+
+Option C — Supabase Safe Testing Layer
+- Tracks state changes before/after database updates
+- Verifies Supabase responses match UI state
+- Helps prevent data sync bugs

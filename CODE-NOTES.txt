@@ -140,7 +140,11 @@ App views and derived reminders
 - renderItinerary(): builds the day cards and item rows.
 - renderFoodOptions(): builds the food catalog and its interactive controls.
 - renderAnimalScrapbook(): shows animal checks, notes, and images.
-- renderBucketList(): shows bucket-list entries and check state.
+- fetchItems(), renderList(), addItem(), toggleItem(), deleteItem(): manage
+  structured items in the shared bucket_list content value.
+- renderBadges(), renderSashState(), checkCompletionState(), triggerConfetti(),
+  stopConfetti(): derive and present completed-item badges and celebration.
+- handleEmojiSelection(): assigns unique emojis to bucket-list items.
 - isBooked(name): checks whether a reservation name covers a given item.
 - deriveOpenItemsFromItinerary(): derives booking/payment reminders from
   itinerary items that are not already booked.

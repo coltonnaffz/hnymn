@@ -1,0 +1,56 @@
+
+Format:
+
+- Append only (never overwrite)
+- Include timestamp
+- Keep summary under 100 words
+- Must describe:
+  - What was tested
+  - What issues were found
+  - What was changed
+  - What was improved
+
+---
+
+## UI / UX RULES
+
+### Emoji system
+- Each emoji can only be used once
+- Used emojis must be disabled in picker
+- Emoji is tied permanently to an item unless removed
+
+### Badge system
+- Badges are derived from completed items only
+- No stored badge state
+
+### Sash system
+- Displays badges in brown-themed vertical UI
+- Moves to center when all items are complete
+
+### Completion state
+When ALL items are completed:
+- Move sash to center
+- Trigger gold/silver confetti ONCE
+- Display red ribbon labeled "COMPLETE"
+- Reverse state if any item becomes incomplete
+
+---
+
+## CODING STYLE
+
+- Prefer readability over brevity
+- Break complex logic into small functions
+- Use clear naming conventions:
+  - fetchItems()
+  - renderList()
+  - checkCompletionState()
+  - renderBadges()
+
+---
+
+## DEBUGGING MINDSET
+
+Treat every function as:
+- A unit that must be testable
+- A system that can fail silently
+- A piece of a larger reactive UI flow
