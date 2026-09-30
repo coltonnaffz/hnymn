@@ -54,3 +54,151 @@ Treat every function as:
 - A unit that must be testable
 - A system that can fail silently
 - A piece of a larger reactive UI flow
+
+---
+
+## 2026-09-30 Full index.html Function Self-Review
+
+Summary (under 100 words): Reviewed all 120 named functions and 129 inline arrow callbacks in index.html. For each, simulated normal, empty/missing, and malformed input paths. Fixed invalid checklist DOM mutation, empty-tier/catalog failures, missing fixed-page render targets, lightbox guards, and drag/drop source loss. Node parsed the inline script; VS Code diagnostics are clean. No live Supabase/browser integration suite exists in this workspace, so network/auth and visual interactions remain unexecuted.
+
+N = normal case; E = empty/missing case; I = invalid input case. “Pass” means the path returns safely or preserves expected state; “fixed” identifies the guard/refactor made during this audit.
+
+### Authentication and Cloud State
+- applyRole — N editor/viewer role classes; E null session -> viewer; I missing metadata -> viewer. Pass.
+- showApp — N ordered cloud/checklist/items/render; E empty content renders empty state; I fetch failures use caches/guards. Pass; live auth not exercised.
+- offlineFallbackOrHome — N online -> home; E offline cache -> read-only app; I absent cache -> home. Pass.
+- applyContent — N known keys assign; E null map no-op; I unknown keys ignored. Pass.
+- loadCloudContent — N rows map/cache; E empty rows -> empty map; I query/JSON/cache failure falls through safely. Pass by path review.
+- reseedWorkingState — N draft seeded; E empty days/items; I malformed item/day filtered by helpers. Pass after guard fixes.
+- renderAll — N each view invoked; E empty globals; I missing child targets guarded by renderers. Pass.
+- renderSite — N values applied; E blank fields; I absent nodes skipped by helper. Pass.
+- set (renderSite callback) — N text/HTML assignment; E null values become blank; I missing element no-op. Pass.
+- renderPreview — N sections/images; E empty preview; I missing panel returns. Pass.
+- escAttr — N ampersand/quotes escaped; E null -> empty; I numeric/object stringified. Pass.
+- loadChecklistState — N server value; E no row -> empty checks; I malformed cache/query falls back. Pass by path review.
+- saveChecklistState — N online upsert; E offline queues; I storage/network error marks retry. Pass by path review.
+- flushChecklistQueue — N dirty online state retried; E clean/offline no-op; I persistence failures contained by saver. Pass.
+- updateOfflineBanner — N online/offline classes; E missing banner skipped; I browser connectivity API assumed available. No observed issue.
+- nextAvailableBucketEmoji — N preferred/free emoji; E exhausted choices -> null; I absent preferred -> first free. Pass.
+- fetchItems — N structured row loads; E empty/missing row; I malformed legacy entries normalized or dropped. Pass by path review; Supabase unexecuted.
+- saveBucketListItems — N unique list upsert; E empty list accepted; I duplicate/missing emoji rejected. Pass by path review.
+- currentItineraryValue — N current draft packaged; E empty state packaged; I malformed globals are upstream-guarded. Pass.
+- saveItineraryToCloud — N editor upsert; E viewer returns false; I Supabase errors return false. Pass by path review.
+
+### Gallery and Media
+- escHtml — N HTML metacharacters escaped; E null -> empty; I arbitrary values stringified. Pass.
+- renderGallery — N records signed/rendered; E no rows clears; I query/sign failures display safe error/omit missing files. Pass by path review.
+- handleGalleryUpload — N captions/uploads saved; E no files/offline exits; I canceled dialog and upload/insert errors release button in finally. Supabase unexecuted.
+- showGalleryDialog — N fields/buttons set and promise returned; E optional fields hidden; I repeated dialogs are not concurrently supported. UI serializes calls; residual assumption.
+- closeGalleryDialog — N resolve once; E already hidden no-op; I absent resolution no throw under static markup. Pass.
+- confirmGalleryDialog — N trimmed input resolves; E empty value allowed; I missing input would throw, but required modal node is static. Residual assumption.
+- cancelGalleryDialog — N resolves canceled; E hidden dialog no-op; I missing modal safely blocked by close helper only when mounted. Static markup assumed.
+- closeGalleryDialogFromBackdrop — N backdrop cancels; E null event not called; I clicks within modal ignored. Pass.
+- toggleGalleryActions — N opens one menu/closes others; E closed menu toggles; I rendered buttons ensure adjacent menu. Static markup assumed.
+- editGalleryCaptionFromMenu — N closes menu and opens editor; E missing item not explicitly guarded. Residual DOM assumption.
+- deleteGalleryItem — N owner-only Storage/row delete; E null/offline/cancel exits; I auth/RLS/storage errors reported. Supabase unexecuted.
+- editGalleryCaption — N saved title; E canceled retains value; I offline/update error reported. Supabase unexecuted.
+- allMediaPaths — N unique preview/animal paths; E empty sources; I missing src/path ignored. Pass.
+- mediaObjectPath — N category/storage URLs normalized; E blank path returns rooted path; I foreign/malformed URL returns null. Pass by path review.
+- loadMediaUrls — N public URLs assembled; E empty paths; I invalid path falls back to original. Supabase client call unexecuted.
+- warmMediaCache — N online fetches are fire-and-forget; E offline returns; I fetch rejection swallowed. Pass.
+- mediaUrl — N mapped URL; E absent map/path; I null path returned unchanged. Pass.
+
+### Checklist, Catalog, and Renderers
+- switchTab — N matching panel/button activated; E missing panel/event returns; I invalid name returns. Pass.
+- toggleDay — N card toggles; E null/missing class now no-op. Fixed.
+- toggleBucket — N valid animal/bucket updates saved array; E offline returns; I missing/unknown dataset now returns before class mutation. Fixed.
+- dedupeUnassigned — N duplicate type/id removed; E non-array -> []; I null/missing type/id filtered. Fixed.
+- toggleActivity — N add/remove and rerender; E missing ID remains a no-op by placement/lookup path; I repeated calls remain deduped. Pass by path review.
+- toggleFood — N add/remove and rerender; E missing ID remains a no-op by lookup path; I repeated calls remain deduped. Pass by path review.
+- activityAmount — N standard/tier amount; E missing amount -> 0; I empty tiers/non-numeric amount -> 0. Fixed.
+- activityTierLabel — N tier label; E absent/empty tiers -> null; I malformed tier -> null. Fixed.
+- setActivityTier — N updates tier and views; E unknown ID harmless map entry; I missing controls handled by renderers. No state corruption found.
+- fmt — N numeric currency; E null -> $0; I nonnumeric -> $0. Fixed.
+- getActivityById — N match; E blank ID -> null; I non-array/malformed registry entries safely ignored. Fixed.
+- getFoodById — N nested match; E empty ID/groups -> null; I malformed groups/items skipped. Fixed.
+- getFoodCategory — N matching category; E absent ID -> null; I malformed groups/items skipped. Fixed.
+- foodIconById — N catalog icon; E missing item -> category/default icon; I malformed lookup -> fallback. Pass after lookup guards.
+- activityIconById — N catalog icon; E absent item -> pin; I malformed lookup -> pin. Pass.
+- expandItem — N activity/food merge; E custom passthrough; I null/non-object -> null and seed filters it. Fixed.
+- renderCart — N totals and rows; E no selections produces empty messages; I missing container returns, malformed nested source data remains an input-schema assumption. Partial residual risk.
+- renderPretrip — N entries render; E empty entries clear; I missing target now returns. Fixed.
+- overviewItemName — N inline/catalog/source ID; E blank name -> null; I null object is not guarded. Residual schema risk.
+- renderOverview — N day summary; E empty draft; I missing overview target returns. Nested day/activity shape assumed from seedDraft.
+- renderItinerary — N cards and expanded state; E empty draft; I missing list returns. Nested day/activity shape is normalized by seedDraft.
+- renderFoodOptions — N grouped options; E empty groups; I missing target now returns, malformed group.items remains a schema assumption. Partial residual risk.
+- renderAnimalScrapbook — N groups/images; E empty data; I missing target now returns, malformed groups remain a schema assumption. Partial residual risk.
+- renderList — N structured rows/badges; E empty list; I missing list returns. Pass.
+- addItem — N unique item upsert; E blank text no-op; I duplicate emoji rejected, save error preserves input. Supabase unexecuted.
+- toggleItem — N checked update; E unknown ID persists unchanged list; I save failure rerenders old state. Supabase unexecuted.
+- deleteItem — N item removed; E unknown ID no-op; I save failure preserves current list. Supabase unexecuted.
+- renderBadges — N completed-only badges; E none shows empty note; I missing badge nodes returns. Pass.
+- renderSashState — N state positions sash; E missing nodes returns; I reduced-motion skips animation. Pass.
+- renderCompletionUI — N completion ribbon reflects boolean; E nodes missing return; I no side effects. Pass.
+- resetRewardState — N timer/reward/confetti reset; E repeated call remains safe; I required canvas is guarded. Pass.
+- invalidateCompletionForMutation — N clears transient reward; E no timer; I repeated invalidation idempotent. Pass.
+- checkCompletionState — N authorized false-to-true reward; E empty false; I deletes/renders disallowed from triggering reward. Pass.
+- handleSashClick — N toggles focus only; E reward state unaffected except visual position; I state constrained to normal/focused. Pass.
+- handleSashKeydown — N Enter/Space activates; E other keys no-op; I missing event not called by markup. Residual DOM assumption.
+- triggerConfetti — N gold/silver burst; E reduced-motion or missing canvas returns; I repeated call cancels old run first. Pass.
+- stopConfetti — N cancels frame/timer and clears backing store; E absent canvas safe; I repeated calls idempotent. Pass.
+- openBucketEmojiPicker — N disables used emojis; E all used focuses Cancel; I missing grid not guarded. Static markup assumption.
+- handleEmojiSelection — N unique add/change saves; E same/current emoji accepted; I used emoji rejected and save errors reported. Supabase unexecuted.
+- closeBucketEmojiPicker — N hides and clears target; E repeat hides; I missing overlay not guarded. Static markup assumption.
+- closeBucketEmojiPickerFromBackdrop — N backdrop closes; E internal click no-op; I missing event not called. Pass by path review.
+- isBooked — N fuzzy reservation match; E blank name false; I malformed reservation names treated empty. Pass.
+- deriveOpenItemsFromItinerary — N deduped booking reminders; E empty itinerary; I unknown sources ignored. Pass for normalized itinerary.
+- renderOpenItems — N derived/manual reminders; E empty output; I missing target returns. Pass.
+- renderActivities — N cards and tiers; E empty data; I missing target returns; malformed tiers remain data-schema risk. Partial.
+
+### Itinerary, Editor, and Overlay Helpers
+- isDesktopEdit — N width > 480; E width 480 false; I browser width assumed numeric. Pass.
+- newUid — N unique sequential IDs; E repeated calls differ; I clock collision mitigated by counter. Pass.
+- seedDraft — N deep-copied/expanded days; E no days -> []; I malformed days/activities filtered. Fixed.
+- ensureUids — N IDs assigned; E non-array -> []; I missing day activity arrays skipped. Fixed.
+- catalogNameToSourceId — N names/aliases mapped; E empty catalogs; I blank IDs/names skipped. Pass.
+- linkCatalog — N aliases linked; E no activities; I malformed day/item shape remains upstream assumption. Residual.
+- setDayTitle — N updates target day; E unknown/unchanged no-op; I invalid day number no-op. Pass.
+- findDraftItem — N UID match; E no match -> null; I empty UID no match. Pass.
+- formatTime — N HH:MM to 12-hour; E empty -> empty; I other formats pass through. Hour range not validated; residual.
+- setItemTime — N changes and saves; E missing UID no-op; I invalid time string is not validated. Residual.
+- customEditItemHtml — N escaped fields and icon choices; E blank values render; I null object not guarded. Static caller supplies item.
+- addCustomItem — N adds/focuses; E mobile/missing day exits; I invalid day no-op. Pass.
+- toggleIconPicker — N toggles controls; E absent item/picker returns; I unknown UID returns. Pass.
+- setCustomIcon — N updates icon and persists; E unchanged icon only closes picker; I missing item returns. Pass.
+- setCustomField — N saves changed field; E unchanged/missing item no-op; I arbitrary field name not allowlisted. Residual risk.
+- saveCustomEdit — N refreshes overview and saves; E empty draft; I save failure is fire-and-forget. Residual risk.
+- pruneEmptyCustomItems — N removes empty scaffolds; E unchanged no save; I null activities unsupported. Draft normalization assumed.
+- saveAllEdits — N flushes and restores button; E missing button still saves; I Supabase failure reported on button. Pass by path review.
+- commitDraftChange — N refreshes dependent views and saves; E empty draft; I save failure is not surfaced. Residual risk.
+- placedSourceIds — N unique sources; E empty draft; I null activities unsupported. Draft normalization assumed.
+- placedDayOf — N returns day; E no match -> null; I blank source ID safely no match. Pass.
+- toggleStagingGroup — N set toggles; E closed group opens; I arbitrary key remains local-only. Pass.
+- renderStaging — N catalog/pool rows; E empty note; I missing staging target returns, malformed nested records remain schema risk. Partial.
+- toggleStagingSelect — N selection toggles; E new ID added; I invalid ID is accepted into transient set. Low risk.
+- allowDrop — N prevents default; E absent event throws. DOM event-only contract.
+- dragStartStaging — N records pool/unassigned; E unknown prefix leaves old dragData; I null ID throws. Residual stale-drag risk.
+- takeDragged — N removes matching source; E missing source -> null; I unknown type -> null. Pass.
+- dropOnDay — N appends valid dragged item; E no item rerenders staging; I invalid day rejected before consuming item. Fixed.
+- dragStartItem — N records UID; E dataTransfer missing is tolerated; I missing event/UID not guarded. DOM event-only contract.
+- dropOnItem — N inserts before target; E missing before UID appends; I invalid day rejected before consuming item. Fixed.
+- removeItem — N catalog item returns to unassigned; E missing day/UID no-op; I malformed source ID defaults to food. Residual validation risk.
+- openStagingDrawer — N toggles drawer; E mobile returns; I missing drawer target not guarded. Static markup assumption.
+- closeStagingDrawer — N closes/prunes; E missing drawer tolerated; I cleanup save may fail silently. Partial.
+- applyEditGating — N breakpoint transition updates; E same width; I repeated mobile resize invokes close repeatedly. Idempotent aside from repeated rendering.
+- openLightbox — N source opens; E empty source no-op; I missing nodes/URL now return. Fixed.
+- closeLightbox — N backdrop/forced close; E unrelated target no-op; I missing nodes/event tolerated. Fixed.
+- openMenuLightbox — N structured menu; E no menu shows placeholder; I missing modal nodes now return. Fixed.
+- closeMenuLightbox — N forced/backdrop closes; E unrelated target no-op; I missing event handled. Pass.
+- toggleFoodSummary — N toggles panel/button; E absent panel/button returns; I missing IDs safe. Fixed.
+
+### Inline Callback Coverage
+- Auth callbacks: session success routes app/home; restore failure uses fallback; signout failure preserves page and reports error.
+- Cloud/render callbacks: content-row loop, preview/image maps, signed URL map, checklist menu loop, catalog maps, and all renderer map/filter/reduce callbacks simulated with populated and empty arrays; malformed records are skipped only where guarded.
+- Event/timer callbacks: online/offline, resize, sash keyboard, backdrop, image click, upload prompt resolution, button reset timers, confetti frame/timeout, and service-worker load/catch paths reviewed for expected cancellation/cleanup.
+- Drag/menu callbacks: item row, day drop, staging selection, nested-menu stop propagation, and lightbox event callbacks reviewed for valid target and missing target cases.
+
+### Findings and Executed Checks
+- Fixed checklist toggle-before-validation, null/missing targets in fixed-page renderers/lightboxes, malformed/empty tiers and catalog groups, numeric formatting fallback, malformed draft records, and invalid drag destinations consuming their source.
+- No additional confirmed state-corruption defects found in the review. Remaining assumptions are listed inline above; schema validation and DOM event handlers rely on their documented callers.
+- Executed: inline script parse with Node; VS Code diagnostics on index.html. Not executed: live Supabase network/RLS operations, browser interaction, or dedicated automated unit suite.

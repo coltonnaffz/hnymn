@@ -1315,16 +1315,17 @@
 
       // Expand or collapse a single itinerary day card.
       function toggleDay(card) {
+        if (!card || !card.classList) return;
         card.classList.toggle("open");
       }
 
       // Toggle a bucket-list or animal check and persist the updated checklist state.
       function toggleBucket(el) {
         if (document.body.classList.contains("no-session")) return; // Stage 8: offline read-only (no auth to persist)
+        if (!el || !el.dataset || !el.classList) return;
+        const { kind, key } = el.dataset;
+        if (!kind || !key || !["bucket", "animals"].includes(kind)) return;
         const on = el.classList.toggle("checked");
-        const kind = el.dataset.kind,
-          key = el.dataset.key;
-        if (!kind || !key) return;
         const arr = checklistState[kind] || (checklistState[kind] = []);
         const i = arr.indexOf(key);
         if (on && i === -1) arr.push(key);
@@ -1340,7 +1341,9 @@
       // Remove duplicate selected catalog items while preserving their first occurrence.
       function dedupeUnassigned(items) {
         const seen = new Set();
+        if (!Array.isArray(items)) return [];
         return items.filter((u) => {
+          if (!u || typeof u !== "object" || !u.type || !u.id) return false;
           const key = u.type + ":" + u.id;
           if (seen.has(key)) return false;
           seen.add(key);
@@ -1384,19 +1387,22 @@
       }
       // Return the selected tier price for an activity, or its standard amount.
       function activityAmount(a) {
-        if (a.tiers) {
+        if (!a || typeof a !== "object") return 0;
+        if (Array.isArray(a.tiers) && a.tiers.length) {
           const tid = activityTiers[a.id] || a.tiers[0].id;
-          const t = a.tiers.find((x) => x.id === tid) || a.tiers[0];
-          return t.amount;
+          const t = a.tiers.find((x) => x && x.id === tid) || a.tiers[0];
+          const amount = Number(t && t.amount);
+          return Number.isFinite(amount) ? amount : 0;
         }
-        return a.amount || 0;
+        const amount = Number(a.amount);
+        return Number.isFinite(amount) ? amount : 0;
       }
       // Return the selected tier label for an activity, if it has tiers.
       function activityTierLabel(a) {
-        if (!a.tiers) return null;
+        if (!a || !Array.isArray(a.tiers) || !a.tiers.length) return null;
         const tid = activityTiers[a.id] || a.tiers[0].id;
-        const t = a.tiers.find((x) => x.id === tid) || a.tiers[0];
-        return t.label;
+        const t = a.tiers.find((x) => x && x.id === tid) || a.tiers[0];
+        return t && typeof t.label === "string" && t.label ? t.label : null;
       }
       // Change an activity's selected pricing tier and refresh the related views.
       function setActivityTier(id, tierId) {
@@ -1407,21 +1413,29 @@
 
       // Format a numeric amount as a dollar value.
       function fmt(n) {
-        return "$" + n.toLocaleString();
+        const amount = Number(n);
+        return "$" + (Number.isFinite(amount) ? amount : 0).toLocaleString();
       }
 
       // ── CATALOG LOOKUP UTILITIES (registry resolution by id) ──
       // Guard against empty/malformed ids so blank registry rows can't be matched.
       // Find an activity catalog entry by its stable ID.
       function getActivityById(id) {
-        return id ? activitiesData.find((a) => a.id === id) || null : null;
+        return id && Array.isArray(activitiesData)
+          ? activitiesData.find((a) => a && a.id === id) || null
+          : null;
       }
       // Find a food catalog entry by its stable ID.
       function getFoodById(id) {
-        return id
-          ? foodOptionsData.flatMap((g) => g.items).find((i) => i.id === id) ||
-              null
-          : null;
+        if (!id || !Array.isArray(foodOptionsData)) return null;
+        for (const group of foodOptionsData) {
+          if (!group || !Array.isArray(group.items)) continue;
+          const item = group.items.find(
+            (candidate) => candidate && candidate.id === id,
+          );
+          if (item) return item;
+        }
+        return null;
       }
 
       // foodOptionsData has no reliable icon → fall back to a category-appropriate emoji.
@@ -1434,8 +1448,15 @@
       };
       // Find the category group containing a food catalog entry.
       function getFoodCategory(id) {
+        if (!id || !Array.isArray(foodOptionsData)) return null;
         for (const g of foodOptionsData) {
-          if (g.items.some((i) => i.id === id)) return g.category;
+          if (
+            g &&
+            Array.isArray(g.items) &&
+            g.items.some((i) => i && i.id === id)
+          ) {
+            return g.category || null;
+          }
         }
         return null;
       }
@@ -1455,6 +1476,7 @@
       // Inline fields override catalog defaults, but blank inline values never erase resolved display data.
       // Expand saved catalog references into the display fields used by itinerary cards.
       function expandItem(item) {
+        if (!item || typeof item !== "object") return null;
         if (!item.type || item.type === "custom") return item;
         let base;
         if (item.type === "activity") {
@@ -1563,6 +1585,7 @@
       // Render the pre-trip timeline from its configured content records.
       function renderPretrip() {
         const list = document.getElementById("pretrip-list");
+        if (!list) return;
         list.innerHTML = pretripData
           .map(
             (item) => `
@@ -1690,6 +1713,7 @@
       // Render categorized restaurants and food options with selection/menu controls.
       function renderFoodOptions() {
         const list = document.getElementById("food-options-list");
+        if (!list) return;
         list.innerHTML = foodOptionsData
           .map(
             (group) => `
@@ -1751,6 +1775,7 @@
       // Render animals, their notes, checklist state, and associated photos.
       function renderAnimalScrapbook() {
         const list = document.getElementById("animal-scrapbook-list");
+        if (!list) return;
         list.innerHTML = animalScrapbookData
           .map(
             (group) => `
@@ -2234,6 +2259,7 @@
       // Render activity cards and their add-to-cart or pricing-tier controls.
       function renderActivities() {
         const grid = document.getElementById("activities-grid");
+        if (!grid) return;
         grid.innerHTML = activitiesData
           .filter((a) => a.id && a.name)
           .map((a) => {
@@ -2295,20 +2321,26 @@
       }
       // Copy the saved itinerary and expand catalog references into display records.
       function seedDraft() {
-        return itineraryState.days.map((day) => ({
-          ...day,
-          activities: day.activities.map((a) =>
-            expandItem(JSON.parse(JSON.stringify(a))),
-          ),
-        }));
+        if (!itineraryState || !Array.isArray(itineraryState.days)) return [];
+        return itineraryState.days
+          .filter((day) => day && typeof day === "object")
+          .map((day) => ({
+            ...day,
+            activities: (Array.isArray(day.activities) ? day.activities : [])
+              .filter((item) => item && typeof item === "object")
+              .map((item) => expandItem(JSON.parse(JSON.stringify(item))))
+              .filter(Boolean),
+          }));
       }
       // Ensure each activity in the draft has a stable ID for editing and drag/drop.
       function ensureUids(days) {
-        days.forEach((d) =>
+        if (!Array.isArray(days)) return [];
+        days.forEach((d) => {
+          if (!d || !Array.isArray(d.activities)) return;
           d.activities.forEach((a) => {
             if (!a.uid) a.uid = newUid();
-          }),
-        );
+          });
+        });
         return days;
       }
       // Map catalog names and aliases to their canonical activity or food IDs.
@@ -2747,9 +2779,14 @@
       function dropOnDay(ev, dayNumber) {
         ev.preventDefault();
         const day = itineraryDraft.find((d) => d.dayNumber === dayNumber);
+        if (!day) {
+          dragData = null;
+          renderStaging();
+          return;
+        }
         const item = takeDragged();
         dragData = null;
-        if (!day || !item) {
+        if (!item) {
           renderStaging();
           return;
         }
@@ -2774,9 +2811,14 @@
           return;
         }
         const day = itineraryDraft.find((d) => d.dayNumber === dayNumber);
+        if (!day) {
+          dragData = null;
+          renderStaging();
+          return;
+        }
         const item = takeDragged();
         dragData = null;
-        if (!day || !item) {
+        if (!item) {
           renderStaging();
           return;
         }
@@ -2858,14 +2900,20 @@
       // Lightbox
       // Open the image lightbox with the selected image URL.
       function openLightbox(src) {
-        document.getElementById("lightbox-img").src = src;
-        document.getElementById("lightbox").classList.add("active");
+        const image = document.getElementById("lightbox-img");
+        const lightbox = document.getElementById("lightbox");
+        if (!image || !lightbox || !src) return;
+        image.src = src;
+        lightbox.classList.add("active");
       }
       // Close the image lightbox when its backdrop or close button is activated.
       function closeLightbox(e, force) {
-        if (force || e.target === document.getElementById("lightbox")) {
-          document.getElementById("lightbox").classList.remove("active");
-          document.getElementById("lightbox-img").src = "";
+        const lightbox = document.getElementById("lightbox");
+        const image = document.getElementById("lightbox-img");
+        if (!lightbox || !image) return;
+        if (force || (e && e.target === lightbox)) {
+          lightbox.classList.remove("active");
+          image.src = "";
         }
       }
       // ── TEXT MENU LIGHTBOX (scrollable restaurant menus — separate from the image lightbox above) ──
@@ -2873,7 +2921,8 @@
       function openMenuLightbox(restaurantId) {
         const box = document.getElementById("menu-scroll");
         const titleEl = document.getElementById("menu-title");
-        if (!box) return;
+        const lightbox = document.getElementById("menu-lightbox");
+        if (!box || !titleEl || !lightbox) return;
         const food =
           typeof getFoodById === "function" ? getFoodById(restaurantId) : null;
         const menuData =
@@ -2942,7 +2991,7 @@
         }
 
         box.scrollTop = 0;
-        document.getElementById("menu-lightbox").style.display = "flex";
+        lightbox.style.display = "flex";
       }
       // Close the menu modal when its backdrop or close button is activated.
       function closeMenuLightbox(e, force) {
@@ -2958,7 +3007,7 @@
       // Expand or collapse a food item's research summary.
       function toggleFoodSummary(itemId, btn) {
         const panel = document.getElementById(`summary-${itemId}`);
-        if (!panel) return;
+        if (!panel || !btn) return;
         const isHidden =
           panel.style.display === "none" || panel.style.display === "";
         if (isHidden) {
