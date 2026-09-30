@@ -1,0 +1,1 @@
+edit gallery tab to show only current gallery files (0 currently)
